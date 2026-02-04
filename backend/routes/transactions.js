@@ -81,6 +81,15 @@ router.get("/:id", authenticateToken, async (req, res) => {
     const user_id = req.user.id;
     const user_role = req.user.role;
 
+    // ✅ VALIDATE ID IS A NUMBER
+    const transactionId = parseInt(id);
+    if (isNaN(transactionId)) {
+      return res.status(400).json({
+        error: "Invalid transaction ID. ID must be a number.",
+        received: id,
+      });
+    }
+
     const transaksi = await pool.query(
       `SELECT 
            t.id,
@@ -94,7 +103,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
          FROM transactions t
          LEFT JOIN users u ON t.kasir_id = u.id
          WHERE t.id = $1`,
-      [id],
+      [transactionId],
     );
 
     if (transaksi.rows.length === 0) {
@@ -118,7 +127,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
          FROM transaction_items ti
          LEFT JOIN products p ON ti.product_id = p.id
          WHERE ti.transaction_id = $1`,
-      [id],
+      [transactionId],
     );
 
     const result = {
@@ -197,7 +206,7 @@ router.get(
  * /api/transactions:
  *   post:
  *     summary: Membuat transaksi baru
- *     description: Hanya dapat dilakukan oleh role **kasir**. Kode transaksi dibuat otomatis.
+ *     description: Dapat dilakukan oleh role **admin**, **kasir**, dan **pelanggan**.
  *     tags: [Transaksi]
  *     security:
  *       - bearerAuth: []
@@ -236,16 +245,49 @@ router.get(
 router.post(
   "/",
   authenticateToken,
-  authorizeRoles("kasir"),
+  authorizeRoles("kasir", "pelanggan"), // ✅ FIXED: Admin removed
   async (req, res) => {
     try {
       const { jumlah_bayar, items } = req.body;
       const user_id = req.user.id;
 
+      // ✅ VALIDATE INPUT
       if (!items || items.length === 0) {
         return res
           .status(400)
           .json({ message: "Daftar items tidak boleh kosong." });
+      }
+
+      if (!jumlah_bayar || isNaN(jumlah_bayar) || jumlah_bayar <= 0) {
+        return res
+          .status(400)
+          .json({ message: "Jumlah bayar harus berupa angka positif." });
+      }
+
+      // Validate each item
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (!item.product_id || isNaN(item.product_id)) {
+          return res
+            .status(400)
+            .json({ message: `Item ${i + 1}: product_id tidak valid.` });
+        }
+        if (!item.qty || isNaN(item.qty) || item.qty <= 0) {
+          return res
+            .status(400)
+            .json({
+              message: `Item ${i + 1}: qty harus berupa angka positif.`,
+            });
+        }
+        if (
+          !item.harga_satuan ||
+          isNaN(item.harga_satuan) ||
+          item.harga_satuan < 0
+        ) {
+          return res
+            .status(400)
+            .json({ message: `Item ${i + 1}: harga_satuan tidak valid.` });
+        }
       }
 
       // Buat kode transaksi otomatis
@@ -305,7 +347,9 @@ router.post(
       });
     } catch (err) {
       console.error("Error buat transaksi:", err);
-      res.status(500).json({ message: "Gagal membuat transaksi." });
+      res
+        .status(500)
+        .json({ message: "Gagal membuat transaksi.", error: err.message });
     }
   },
 );
@@ -360,12 +404,21 @@ router.post(
 router.put(
   "/:id",
   authenticateToken,
-  authorizeRoles("kasir"),
+  authorizeRoles("kasir"), // ✅ FIXED: Admin removed
   async (req, res) => {
     try {
       const { id } = req.params;
       const { jumlah_bayar, items } = req.body;
       const kasir_id = req.user.id;
+
+      // ✅ VALIDATE ID IS A NUMBER
+      const transactionId = parseInt(id);
+      if (isNaN(transactionId)) {
+        return res.status(400).json({
+          message: "Invalid transaction ID. ID must be a number.",
+          received: id,
+        });
+      }
 
       if (!items || items.length === 0) {
         return res
@@ -395,7 +448,7 @@ router.put(
              tanggal = CURRENT_TIMESTAMP
          WHERE id = $5
          RETURNING *`,
-        [total_harga, jumlah_bayar, kembalian, kasir_id, id],
+        [total_harga, jumlah_bayar, kembalian, kasir_id, transactionId],
       );
 
       if (updateTransaksi.rows.length === 0) {
@@ -404,7 +457,7 @@ router.put(
 
       await pool.query(
         `DELETE FROM transaction_items WHERE transaction_id = $1`,
-        [id],
+        [transactionId],
       );
 
       for (let item of items) {
@@ -412,7 +465,13 @@ router.put(
           `INSERT INTO transaction_items 
             (transaction_id, product_id, qty, harga_satuan, subtotal)
            VALUES ($1, $2, $3, $4, $5)`,
-          [id, item.product_id, item.qty, item.harga_satuan, item.subtotal],
+          [
+            transactionId,
+            item.product_id,
+            item.qty,
+            item.harga_satuan,
+            item.subtotal,
+          ],
         );
       }
 
@@ -431,18 +490,28 @@ router.put(
 );
 
 /**
- * DELETE transaksi (kasir only)
+ * DELETE transaksi (admin & kasir only)
  */
 router.delete(
-  "./:id".replace("./", "/"),
+  "/:id",
   authenticateToken,
   authorizeRoles("kasir"),
   async (req, res) => {
     try {
       const { id } = req.params;
+
+      // ✅ VALIDATE ID IS A NUMBER
+      const transactionId = parseInt(id);
+      if (isNaN(transactionId)) {
+        return res.status(400).json({
+          message: "Invalid transaction ID. ID must be a number.",
+          received: id,
+        });
+      }
+
       const deleted = await pool.query(
         "DELETE FROM transactions WHERE id=$1 RETURNING *",
-        [id],
+        [transactionId],
       );
       if (!deleted.rows.length) {
         return res.status(404).json({ message: "Transaksi tidak ditemukan." });

@@ -9,8 +9,10 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
+  const passwordRef = React.useRef(null);
+
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e?.preventDefault(); // Optional chaining in case triggered manually without event
     setError("");
 
     if (!email.trim() || !password) {
@@ -29,6 +31,17 @@ export default function Login({ onLogin }) {
       setError(err.message || "Login gagal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef) {
+        nextRef.current.focus();
+      } else {
+        handleLogin();
+      }
     }
   };
 
@@ -55,6 +68,7 @@ export default function Login({ onLogin }) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, passwordRef)}
             placeholder="Masukkan email"
             style={{
               width: "100%",
@@ -67,9 +81,11 @@ export default function Login({ onLogin }) {
         <div style={{ marginBottom: 12 }}>
           <label>Password</label>
           <input
+            ref={passwordRef}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, null)}
             placeholder="Masukkan password"
             style={{
               width: "100%",

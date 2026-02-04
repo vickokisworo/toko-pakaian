@@ -41,6 +41,33 @@ router.get(
   }
 );
 
+// ======================== GET MY PROFILE ========================
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Ambil data profile user yang sedang login
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Data profile user
+ */
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const user = await pool.query(
+      "SELECT id, nama, email, role, is_active, created_at FROM users WHERE id=$1",
+      [req.user.id],
+    );
+    if (!user.rows.length)
+      return res.status(404).json({ error: "User tidak ditemukan" });
+    res.json(user.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ======================== GET USER BY ID ========================
 /**
  * @swagger

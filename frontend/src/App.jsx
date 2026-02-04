@@ -30,9 +30,11 @@ function Nav({ onRoute, onLogout, user }) {
       <button onClick={() => onRoute("#/categories")} style={{ padding: 10 }}>
         Categories
       </button>
-      <button onClick={() => onRoute("#/transactions")} style={{ padding: 10 }}>
-        Transactions
-      </button>
+      {user?.role !== "pelanggan" && (
+        <button onClick={() => onRoute("#/transactions")} style={{ padding: 10 }}>
+          Transactions
+        </button>
+      )}
       {user?.role === "admin" && (
         <button onClick={() => onRoute("#/users")} style={{ padding: 10 }}>
           Users
@@ -184,7 +186,14 @@ export default function App() {
         )}
         {route === "#/products" && <Products />}
         {route === "#/categories" && <Categories />}
-        {route === "#/transactions" && <Transactions user={user} />}
+        {route === "#/transactions" && user?.role !== "pelanggan" && (
+          <Transactions user={user} />
+        )}
+        {route === "#/transactions" && user?.role === "pelanggan" && (
+          <div style={{ color: "red" }}>
+            Access Denied: Customers cannot access Transactions page
+          </div>
+        )}
         {route === "#/users" && user?.role === "admin" && <Users />}
         {route === "#/users" && user?.role !== "admin" && (
           <div style={{ color: "red" }}>

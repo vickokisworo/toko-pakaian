@@ -15,7 +15,7 @@ const jwt = require("jsonwebtoken");
  * @swagger
  * /api/auth/register:
  *   post:
- *     summary: Registrasi akun baru (Admin, Kasir, atau Pelanggan)
+ *     summary: Registrasi akun baru (Khusus Pelanggan)
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -27,21 +27,16 @@ const jwt = require("jsonwebtoken");
  *               - nama
  *               - email
  *               - password
- *               - role
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Kasir Baru"
+ *                 example: "Pelanggan Baru"
  *               email:
  *                 type: string
- *                 example: "kasirbaru@mail.com"
+ *                 example: "pelanggan@mail.com"
  *               password:
  *                 type: string
  *                 example: "password123"
- *               role:
- *                 type: string
- *                 enum: [admin, kasir, pelanggan]
- *                 example: kasir
  *     responses:
  *       201:
  *         description: Registrasi berhasil
@@ -52,37 +47,15 @@ const jwt = require("jsonwebtoken");
  */
 router.post("/register", async (req, res) => {
   try {
-    const { nama, email, password, role } = req.body;
-    // default role is pelanggan
-    const requestedRole = role || "pelanggan";
-
-    // if trying to create admin/masir (kasir) accounts, require admin token
-    if (requestedRole !== "pelanggan") {
-      const authHeader = req.headers["authorization"];
-      const token = authHeader && authHeader.split(" ")[1];
-      if (!token)
-        return res
-          .status(403)
-          .json({ error: "Hanya admin dapat membuat akun selain pelanggan" });
-
-      try {
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        if (decoded.role !== "admin")
-          return res
-            .status(403)
-            .json({ error: "Hanya admin dapat membuat akun selain pelanggan" });
-      } catch (e) {
-        return res
-          .status(403)
-          .json({ error: "Token tidak valid. Aksi memerlukan admin." });
-      }
-    }
+    const { nama, email, password } = req.body;
+    // Strict rule: Public registration is ALWAYS for customers
+    const role = "pelanggan";
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await pool.query(
       `INSERT INTO users (nama, email, password, role)
        VALUES ($1,$2,$3,$4) RETURNING id, nama, email, role`,
-      [nama, email, hashedPassword, requestedRole],
+      [nama, email, hashedPassword, role],
     );
     res
       .status(201)
@@ -151,6 +124,12 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" },
     );
 
+    // ✅ Simpan refresh token ke database
+    await pool.query("UPDATE users SET refresh_token=$1 WHERE id=$2", [
+      refreshToken,
+      user.id,
+    ]);
+
     res.json({
       message: "Login berhasil",
       accessToken,
@@ -195,19 +174,36 @@ router.post("/refresh", async (req, res) => {
   if (!refreshToken)
     return res.status(401).json({ error: "Refresh token tidak ditemukan" });
 
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    if (err)
+  // ✅ Cek apakah refresh token ada di database
+  try {
+    const result = await pool.query(
+      "SELECT * FROM users WHERE refresh_token=$1",
+      [refreshToken],
+    );
+    if (!result.rows.length)
       return res
         .status(403)
-        .json({ error: "Refresh token expired atau tidak valid" });
+        .json({ error: "Refresh token tidak valid atau sudah logout" });
 
-    const newAccessToken = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1h" },
-    );
-    res.json({ accessToken: newAccessToken });
-  });
+    const user = result.rows[0];
+
+    // Verify token validity
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+      if (err)
+        return res
+          .status(403)
+          .json({ error: "Refresh token expired atau tidak valid" });
+
+      const newAccessToken = jwt.sign(
+        { id: user.id, role: user.role, nama: user.nama },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1h" },
+      );
+      res.json({ accessToken: newAccessToken });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -237,8 +233,15 @@ router.post("/logout", async (req, res) => {
   if (!refreshToken)
     return res.status(400).json({ error: "Refresh token diperlukan" });
 
-  // ✅ tidak perlu update database, hanya respon sukses
-  res.json({ message: "Logout berhasil (hapus token di sisi client)" });
+  try {
+    // ✅ Update database set refresh_token NULL
+    await pool.query("UPDATE users SET refresh_token=NULL WHERE refresh_token=$1", [
+      refreshToken,
+    ]);
+    res.json({ message: "Logout berhasil" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

@@ -14,7 +14,6 @@ export default function Transactions({ user }) {
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [editingCart, setEditingCart] = useState(null);
   const [txSearch, setTxSearch] = useState("");
 
   const userRole =
@@ -30,6 +29,7 @@ export default function Transactions({ user }) {
       setProducts(p || []);
       const t = await getTransactions();
       setTransactions(t || []);
+      setError(null);
     } catch (e) {
       setError(e.message);
     }
@@ -73,14 +73,23 @@ export default function Transactions({ user }) {
       setError("Cart kosong");
       return;
     }
-    if (jumlahBayar <= 0) {
+
+    const totalPrice = cart.reduce((sum, c) => sum + c.qty * c.harga_satuan, 0);
+    const paymentAmount = Number(jumlahBayar);
+
+    if (!paymentAmount || paymentAmount <= 0) {
       setError("Jumlah bayar harus lebih dari 0");
+      return;
+    }
+
+    if (paymentAmount < totalPrice) {
+      setError(`Jumlah bayar kurang. Total: Rp ${totalPrice.toLocaleString()}`);
       return;
     }
 
     try {
       const payload = {
-        jumlah_bayar: Number(jumlahBayar),
+        jumlah_bayar: paymentAmount,
         items: cart.map((c) => ({
           product_id: c.product_id,
           qty: c.qty,
@@ -93,9 +102,39 @@ export default function Transactions({ user }) {
       setCart([]);
       setJumlahBayar(0);
       setError(null);
+      loadData(); // Reload to get updated data
     } catch (e) {
       setError(e.message);
     }
+  };
+
+  const handleSearch = async () => {
+    if (!txSearch.trim()) {
+      loadData();
+      return;
+    }
+
+    // ✅ VALIDATE: Only search if it's a valid number
+    const searchId = parseInt(txSearch);
+    if (isNaN(searchId)) {
+      setError("ID transaksi harus berupa angka");
+      return;
+    }
+
+    try {
+      const d = await getTransactionDetail(searchId);
+      setTransactions(d ? [d] : []);
+      setError(null);
+    } catch (e) {
+      setError(e.message);
+      setTransactions([]);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setTxSearch("");
+    setError(null);
+    loadData();
   };
 
   const totalPrice = cart.reduce((sum, c) => sum + c.qty * c.harga_satuan, 0);
@@ -111,39 +150,23 @@ export default function Transactions({ user }) {
 
       <div style={{ marginBottom: 12 }}>
         <input
-          placeholder="Cari transaksi by id"
+          placeholder="Cari transaksi by id (angka)"
           value={txSearch}
           onChange={(e) => setTxSearch(e.target.value)}
+          type="text"
           style={{ padding: 6, width: 180, marginRight: 8 }}
         />
-        <button
-          onClick={async () => {
-            if (!txSearch) return loadData();
-            try {
-              const d = await getTransactionDetail(txSearch);
-              setTransactions(d ? [d] : []);
-            } catch (e) {
-              setError(e.message);
-            }
-          }}
-          style={{ padding: 6 }}
-        >
+        <button onClick={handleSearch} style={{ padding: 6 }}>
           Cari
         </button>
-        <button
-          onClick={() => {
-            setTxSearch("");
-            loadData();
-          }}
-          style={{ padding: 6, marginLeft: 8 }}
-        >
+        <button onClick={handleClearSearch} style={{ padding: 6, marginLeft: 8 }}>
           Clear
         </button>
       </div>
 
       {/* Sidebar untuk create/edit transaction */}
       <div style={{ display: "flex", gap: 20 }}>
-        {!isPelanggan && (
+        {!isPelanggan && userRole !== "admin" && (
           <>
             <div style={{ flex: 1 }}>
               <h4>Products</h4>
@@ -163,15 +186,17 @@ export default function Transactions({ user }) {
                     </div>
                     <button
                       onClick={() => addToCart(p)}
+                      disabled={p.stok <= 0}
                       style={{
                         marginTop: 8,
-                        backgroundColor: "#4CAF50",
+                        backgroundColor: p.stok <= 0 ? "#ccc" : "#4CAF50",
                         color: "white",
                         padding: 5,
                         width: "100%",
+                        cursor: p.stok <= 0 ? "not-allowed" : "pointer",
                       }}
                     >
-                      Add
+                      {p.stok <= 0 ? "Stok Habis" : "Add"}
                     </button>
                   </div>
                 ))}
@@ -240,6 +265,7 @@ export default function Transactions({ user }) {
                             )
                           }
                           style={{ width: 50, padding: 2 }}
+                          min="1"
                         />
                         <button
                           onClick={() => updateCartQty(c.product_id, c.qty + 1)}
@@ -280,6 +306,7 @@ export default function Transactions({ user }) {
                         value={jumlahBayar}
                         onChange={(e) => setJumlahBayar(e.target.value)}
                         style={{ width: "100%", padding: 8 }}
+                        min="0"
                       />
                     </div>
 

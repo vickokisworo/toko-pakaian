@@ -98,25 +98,22 @@ export async function register(payload) {
 }
 
 export async function logout() {
-  const refreshToken = localStorage.getItem("refreshToken");
+  const refreshToken = sessionStorage.getItem("refreshToken");
   try {
     await request(`/auth/logout`, {
       method: "POST",
       body: JSON.stringify({ refreshToken }),
     });
-  } catch (e) {}
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  } catch (e) { }
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("refreshToken");
 }
 
 export async function getMe() {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = sessionStorage.getItem("accessToken");
     if (!token) return null;
-    // decode minimal info from token? backend returns user on login; provide endpoint fallback
-    // try to call protected /users/me if exists, otherwise return null
-    // For now, return null and rely on login callback to set user
-    return null;
+    return request("/users/me", { method: "GET" });
   } catch (e) {
     return null;
   }
