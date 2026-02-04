@@ -53,11 +53,36 @@ const jwt = require("jsonwebtoken");
 router.post("/register", async (req, res) => {
   try {
     const { nama, email, password, role } = req.body;
+    // default role is pelanggan
+    const requestedRole = role || "pelanggan";
+
+    // if trying to create admin/masir (kasir) accounts, require admin token
+    if (requestedRole !== "pelanggan") {
+      const authHeader = req.headers["authorization"];
+      const token = authHeader && authHeader.split(" ")[1];
+      if (!token)
+        return res
+          .status(403)
+          .json({ error: "Hanya admin dapat membuat akun selain pelanggan" });
+
+      try {
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        if (decoded.role !== "admin")
+          return res
+            .status(403)
+            .json({ error: "Hanya admin dapat membuat akun selain pelanggan" });
+      } catch (e) {
+        return res
+          .status(403)
+          .json({ error: "Token tidak valid. Aksi memerlukan admin." });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await pool.query(
       `INSERT INTO users (nama, email, password, role)
        VALUES ($1,$2,$3,$4) RETURNING id, nama, email, role`,
-      [nama, email, hashedPassword, role]
+      [nama, email, hashedPassword, requestedRole],
     );
     res
       .status(201)
@@ -116,14 +141,14 @@ router.post("/login", async (req, res) => {
     const accessToken = jwt.sign(
       { id: user.id, role: user.role, nama: user.nama },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // ✅ refresh token dibuat hanya untuk client (tanpa disimpan di DB)
     const refreshToken = jwt.sign(
       { id: user.id, role: user.role },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.json({
@@ -179,7 +204,7 @@ router.post("/refresh", async (req, res) => {
     const newAccessToken = jwt.sign(
       { id: user.id, role: user.role },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
     res.json({ accessToken: newAccessToken });
   });

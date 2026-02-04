@@ -28,17 +28,29 @@ const authorizeRoles = require("../middleware/authorization");
 router.get(
   "/",
   authenticateToken,
-  authorizeRoles("admin", "kasir"),
+  authorizeRoles("admin", "kasir", "pelanggan"),
   async (req, res) => {
     try {
+      const user_id = req.user.id;
+      const user_role = req.user.role;
+
+      if (user_role === "pelanggan") {
+        // pelanggan hanya lihat riwayat transaksinya sendiri (yang dibuat oleh akun pelanggan tersebut)
+        const transactions = await pool.query(
+          "SELECT * FROM transactions WHERE kasir_id = $1 ORDER BY tanggal DESC",
+          [user_id],
+        );
+        return res.json(transactions.rows);
+      }
+
       const transactions = await pool.query(
-        "SELECT * FROM transactions ORDER BY tanggal DESC"
+        "SELECT * FROM transactions ORDER BY tanggal DESC",
       );
       res.json(transactions.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -58,19 +70,19 @@ router.get(
  *     responses:
  *       200:
  *         description: Detail transaksi ditemukan.
+ *       403:
+ *         description: Tidak memiliki akses ke transaksi ini.
  *       404:
  *         description: Transaksi tidak ditemukan.
  */
-router.get(
-  "/:id",
-  authenticateToken,
-  authorizeRoles("admin", "kasir"),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
+router.get("/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user.id;
+    const user_role = req.user.role;
 
-      const transaksi = await pool.query(
-        `SELECT 
+    const transaksi = await pool.query(
+      `SELECT 
            t.id,
            t.kode_transaksi,
            t.total_harga,
@@ -82,15 +94,22 @@ router.get(
          FROM transactions t
          LEFT JOIN users u ON t.kasir_id = u.id
          WHERE t.id = $1`,
-        [id]
-      );
+      [id],
+    );
 
-      if (transaksi.rows.length === 0) {
-        return res.status(404).json({ message: "Transaksi tidak ditemukan." });
-      }
+    if (transaksi.rows.length === 0) {
+      return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+    }
 
-      const items = await pool.query(
-        `SELECT 
+    // Pelanggan hanya bisa lihat transaksi sendiri (yang dibuat oleh mereka)
+    if (user_role === "pelanggan" && transaksi.rows[0].kasir_id !== user_id) {
+      return res.status(403).json({
+        error: "Akses ditolak: Anda hanya bisa melihat transaksi milik Anda.",
+      });
+    }
+
+    const items = await pool.query(
+      `SELECT 
            ti.product_id,
            p.nama_produk,
            ti.qty,
@@ -99,21 +118,20 @@ router.get(
          FROM transaction_items ti
          LEFT JOIN products p ON ti.product_id = p.id
          WHERE ti.transaction_id = $1`,
-        [id]
-      );
+      [id],
+    );
 
-      const result = {
-        ...transaksi.rows[0],
-        items: items.rows,
-      };
+    const result = {
+      ...transaksi.rows[0],
+      items: items.rows,
+    };
 
-      res.json(result);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Terjadi kesalahan server." });
-    }
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Terjadi kesalahan server." });
   }
-);
+});
 
 /**
  * @swagger
@@ -146,7 +164,7 @@ router.get(
 
       const transaksi = await pool.query(
         `SELECT * FROM transactions WHERE kode_transaksi = $1`,
-        [kode_transaksi]
+        [kode_transaksi],
       );
 
       if (transaksi.rows.length === 0) {
@@ -160,7 +178,7 @@ router.get(
          FROM transaction_items ti
          JOIN products p ON ti.product_id = p.id
          WHERE ti.transaction_id = $1`,
-        [transaksi.rows[0].id]
+        [transaksi.rows[0].id],
       );
 
       res.json({
@@ -171,7 +189,7 @@ router.get(
       console.error(err);
       res.status(500).json({ message: "Terjadi kesalahan server." });
     }
-  }
+  },
 );
 
 /**
@@ -222,7 +240,7 @@ router.post(
   async (req, res) => {
     try {
       const { jumlah_bayar, items } = req.body;
-      const kasir_id = req.user.id;
+      const user_id = req.user.id;
 
       if (!items || items.length === 0) {
         return res
@@ -257,7 +275,7 @@ router.post(
           (kode_transaksi, kasir_id, total_harga, jumlah_bayar, kembalian)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [kode_transaksi, kasir_id, total_harga, jumlah_bayar, kembalian]
+        [kode_transaksi, user_id, total_harga, jumlah_bayar, kembalian],
       );
 
       const transaction_id = trx.rows[0].id;
@@ -274,7 +292,7 @@ router.post(
             item.qty,
             item.harga_satuan,
             item.subtotal,
-          ]
+          ],
         );
       }
 
@@ -289,15 +307,15 @@ router.post(
       console.error("Error buat transaksi:", err);
       res.status(500).json({ message: "Gagal membuat transaksi." });
     }
-  }
+  },
 );
 
 /**
  * @swagger
  * /api/transactions/{id}:
  *   put:
- *     summary: Mengupdate transaksi
- *     description: Hanya role **kasir** yang dapat memperbarui transaksi.
+ *     summary: Mengupdate transaksi (Admin & Kasir only)
+ *     description: Hanya role **admin** dan **kasir** yang dapat memperbarui transaksi.
  *     tags: [Transaksi]
  *     security:
  *       - bearerAuth: []
@@ -377,7 +395,7 @@ router.put(
              tanggal = CURRENT_TIMESTAMP
          WHERE id = $5
          RETURNING *`,
-        [total_harga, jumlah_bayar, kembalian, kasir_id, id]
+        [total_harga, jumlah_bayar, kembalian, kasir_id, id],
       );
 
       if (updateTransaksi.rows.length === 0) {
@@ -386,7 +404,7 @@ router.put(
 
       await pool.query(
         `DELETE FROM transaction_items WHERE transaction_id = $1`,
-        [id]
+        [id],
       );
 
       for (let item of items) {
@@ -394,7 +412,7 @@ router.put(
           `INSERT INTO transaction_items 
             (transaction_id, product_id, qty, harga_satuan, subtotal)
            VALUES ($1, $2, $3, $4, $5)`,
-          [id, item.product_id, item.qty, item.harga_satuan, item.subtotal]
+          [id, item.product_id, item.qty, item.harga_satuan, item.subtotal],
         );
       }
 
@@ -409,7 +427,32 @@ router.put(
       console.error("Error update transaksi:", err);
       res.status(500).json({ message: "Terjadi kesalahan server." });
     }
-  }
+  },
+);
+
+/**
+ * DELETE transaksi (kasir only)
+ */
+router.delete(
+  "./:id".replace("./", "/"),
+  authenticateToken,
+  authorizeRoles("kasir"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await pool.query(
+        "DELETE FROM transactions WHERE id=$1 RETURNING *",
+        [id],
+      );
+      if (!deleted.rows.length) {
+        return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+      }
+      res.json({ message: "Transaksi berhasil dihapus." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+  },
 );
 
 module.exports = router;

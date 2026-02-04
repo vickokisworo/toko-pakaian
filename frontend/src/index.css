@@ -1,0 +1,37 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  padding: 16px;
+}
+.nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+button {
+  padding: 6px 10px;
+}
+main {
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+.card {
+  padding: 8px;
+  border: 1px solid #ddd;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+form > div {
+  margin-bottom: 8px;
+}
+input,
+select {
+  padding: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}

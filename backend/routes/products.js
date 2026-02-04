@@ -31,24 +31,45 @@ router.get(
   authorizeRoles("admin", "kasir", "pelanggan"),
   async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT p.*, c.nama_kategori 
+      const { kategori, search } = req.query;
+      let params = [];
+      let where = [];
+      let base = `SELECT p.*, c.nama_kategori 
          FROM products p 
-         LEFT JOIN categories c ON p.kategori_id = c.id 
-         ORDER BY p.created_at DESC`
-      );
+         LEFT JOIN categories c ON p.kategori_id = c.id`;
+
+      if (kategori) {
+        params.push(kategori);
+        where.push(`p.kategori_id = $${params.length}`);
+      }
+
+      if (search) {
+        // if numeric, allow searching by id
+        if (!isNaN(Number(search))) {
+          params.push(Number(search));
+          where.push(`p.id = $${params.length}`);
+        } else {
+          params.push(`%${search}%`);
+          where.push(`p.nama_produk ILIKE $${params.length}`);
+        }
+      }
+
+      if (where.length) base += ` WHERE ${where.join(" AND ")}`;
+      base += " ORDER BY p.created_at DESC";
+
+      const result = await pool.query(base, params);
       res.json(result.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
  * @swagger
  * /api/products/{id}:
  *   get:
- *     summary: Mendapatkan detail produk berdasarkan ID
+ *     summary: Mendapatkan detail produk berdasarkan ID (Admin & Kasir)
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -67,7 +88,7 @@ router.get(
 router.get(
   "/:id",
   authenticateToken,
-  authorizeRoles("admin", "kasir"),
+  authorizeRoles("admin", "kasir", "pelanggan"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -76,7 +97,7 @@ router.get(
          FROM products p 
          LEFT JOIN categories c ON p.kategori_id = c.id 
          WHERE p.id = $1`,
-        [id]
+        [id],
       );
       if (!result.rows.length)
         return res.status(404).json({ message: "Produk tidak ditemukan." });
@@ -84,7 +105,7 @@ router.get(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -130,13 +151,13 @@ router.post(
       const newProduct = await pool.query(
         `INSERT INTO products (nama_produk, harga, stok, kategori_id) 
          VALUES ($1,$2,$3,$4) RETURNING *`,
-        [nama_produk, harga, stok, kategori_id]
+        [nama_produk, harga, stok, kategori_id],
       );
       res.status(201).json(newProduct.rows[0]);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -187,7 +208,7 @@ router.put(
         `UPDATE products 
          SET nama_produk=$1, harga=$2, stok=$3, kategori_id=$4 
          WHERE id=$5 RETURNING *`,
-        [nama_produk, harga, stok, kategori_id, id]
+        [nama_produk, harga, stok, kategori_id, id],
       );
 
       if (!updated.rows.length)
@@ -197,7 +218,7 @@ router.put(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -229,7 +250,7 @@ router.delete(
       const { id } = req.params;
       const deleted = await pool.query(
         "DELETE FROM products WHERE id=$1 RETURNING *",
-        [id]
+        [id],
       );
       if (!deleted.rows.length)
         return res.status(404).json({ message: "Produk tidak ditemukan." });
@@ -237,7 +258,7 @@ router.delete(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 module.exports = router;

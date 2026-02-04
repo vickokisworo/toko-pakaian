@@ -32,13 +32,13 @@ router.get(
   async (req, res) => {
     try {
       const categories = await pool.query(
-        "SELECT * FROM categories ORDER BY created_at DESC"
+        "SELECT * FROM categories ORDER BY created_at DESC",
       );
       res.json(categories.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -65,13 +65,13 @@ router.get(
 router.get(
   "/:id",
   authenticateToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "kasir", "pelanggan"),
   async (req, res) => {
     try {
       const { id } = req.params;
       const result = await pool.query(
         "SELECT * FROM categories WHERE id = $1",
-        [id]
+        [id],
       );
 
       if (result.rows.length === 0) {
@@ -83,7 +83,7 @@ router.get(
       console.error(err);
       res.status(500).json({ message: "Terjadi kesalahan server." });
     }
-  }
+  },
 );
 
 /**
@@ -119,13 +119,13 @@ router.post(
       const { nama_kategori } = req.body;
       const newCat = await pool.query(
         "INSERT INTO categories (nama_kategori) VALUES ($1) RETURNING *",
-        [nama_kategori]
+        [nama_kategori],
       );
       res.status(201).json(newCat.rows[0]);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -169,7 +169,7 @@ router.put(
       const { nama_kategori } = req.body;
       const updated = await pool.query(
         "UPDATE categories SET nama_kategori=$1 WHERE id=$2 RETURNING *",
-        [nama_kategori, id]
+        [nama_kategori, id],
       );
       if (!updated.rows.length)
         return res.status(404).json({ error: "Kategori tidak ditemukan" });
@@ -177,7 +177,7 @@ router.put(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 /**
@@ -215,7 +215,7 @@ router.delete(
       // cek dulu apakah kategori dipakai
       const used = await pool.query(
         "SELECT id FROM products WHERE kategori_id = $1 LIMIT 1",
-        [id]
+        [id],
       );
 
       if (used.rows.length > 0) {
@@ -227,7 +227,7 @@ router.delete(
 
       const deleted = await pool.query(
         "DELETE FROM categories WHERE id=$1 RETURNING *",
-        [id]
+        [id],
       );
 
       if (!deleted.rows.length) {
@@ -240,7 +240,7 @@ router.delete(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 module.exports = router;
