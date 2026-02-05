@@ -5,6 +5,9 @@ import Categories from "./pages/Categories";
 import Transactions from "./pages/Transactions";
 import Users from "./pages/Users";
 import { logout } from "./api";
+import Footer from "./components/Footer";
+import logo from "./assets/logo/1000222878-removebg-preview.png";
+
 
 // --- Internal Component: Trending Slider ---
 function TrendingSlider() {
@@ -135,7 +138,7 @@ function Nav({ onRoute, onLogout, user, route }) {
         zIndex: 1000,
         backgroundColor: isDashboard
           ? (scrolled ? "rgba(0,0,0,0.9)" : "transparent")
-          : "#374151", // Solid dark grey for other pages
+          : "rgba(0, 0, 0, 0.85)", // Semi-transparent black for other pages
         color: "white",
         padding: "15px 30px",
         transition: "background-color 0.3s ease",
@@ -369,43 +372,7 @@ export default function App() {
         )}
       </main>
 
-      <footer style={{
-        padding: "40px 20px",
-        backgroundColor: "#4b5563", // Gray-600
-        color: "white",
-        marginTop: "auto"
-      }}>
-        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "30px", textAlign: "left" }}>
-
-          {/* Store Information in Footer */}
-          <div>
-            <h4 style={{ color: "#60a5fa", marginBottom: "15px", fontSize: "1.2rem" }}>📍 Store Location</h4>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Jl. Teknologi No. 123</p>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Digital City, Tech Valley</p>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Indonesia, 12345</p>
-          </div>
-
-          <div>
-            <h4 style={{ color: "#60a5fa", marginBottom: "15px", fontSize: "1.2rem" }}>🕒 Opening Hours</h4>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Mon - Fri: 09:00 - 21:00</p>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Saturday: 10:00 - 22:00</p>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Sunday: 10:00 - 20:00</p>
-          </div>
-
-          <div>
-            <h4 style={{ color: "#60a5fa", marginBottom: "15px", fontSize: "1.2rem" }}>📞 Contact Us</h4>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Phone: +62 812 3456 7890</p>
-            <p style={{ margin: "5px 0", color: "#cbd5e1" }}>Email: support@vickostore.com</p>
-            <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
-              <span>📷 IG</span> | <span>📘 FB</span> | <span>🐦 TW</span>
-            </div>
-          </div>
-
-        </div>
-        <div style={{ textAlign: "center", borderTop: "1px solid #334155", marginTop: "30px", paddingTop: "20px", color: "#94a3b8", fontSize: "0.85rem" }}>
-          © {new Date().getFullYear()} Vicko Store. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
