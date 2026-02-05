@@ -10,7 +10,7 @@ const router = express.Router();
 const pool = require("../config/db");
 const authenticateToken = require("../middleware/authenticate");
 const authorizeRoles = require("../middleware/authorization");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 // ======================== GET SEMUA USER ========================
 /**

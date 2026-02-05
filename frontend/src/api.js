@@ -16,10 +16,13 @@ function parseErrorMessage(json, statusText) {
 
 async function request(path, opts = {}) {
   const headers = {
-    "Content-Type": "application/json",
     ...getAuthHeaders(),
     ...(opts.headers || {}),
   };
+
+  if (!(opts.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   try {
     const res = await fetch(`${API_URL}${path}`, { ...opts, headers });
@@ -132,14 +135,14 @@ export async function getProductDetail(id) {
 export async function createProduct(payload) {
   return request(`/products`, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
   });
 }
 
 export async function updateProduct(id, payload) {
   return request(`/products/${id}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
   });
 }
 

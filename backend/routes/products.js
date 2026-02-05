@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require("../config/db");
 const authenticateToken = require("../middleware/authenticate");
 const authorizeRoles = require("../middleware/authorization");
+const upload = require("../middleware/upload");
 
 /**
  * @swagger
@@ -145,13 +146,16 @@ router.post(
   "/",
   authenticateToken,
   authorizeRoles("admin"),
+  upload.single("image"),
   async (req, res) => {
     try {
       const { nama_produk, harga, stok, kategori_id } = req.body;
+      const image = req.file ? `/uploads/products/${req.file.filename}` : null;
+
       const newProduct = await pool.query(
-        `INSERT INTO products (nama_produk, harga, stok, kategori_id) 
-         VALUES ($1,$2,$3,$4) RETURNING *`,
-        [nama_produk, harga, stok, kategori_id],
+        `INSERT INTO products (nama_produk, harga, stok, kategori_id, image) 
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [nama_produk, harga, stok, kategori_id, image],
       );
       res.status(201).json(newProduct.rows[0]);
     } catch (err) {
@@ -199,17 +203,34 @@ router.put(
   "/:id",
   authenticateToken,
   authorizeRoles("admin"),
+  upload.single("image"),
   async (req, res) => {
     try {
       const { id } = req.params;
       const { nama_produk, harga, stok, kategori_id } = req.body;
+      const image = req.file ? `/uploads/products/${req.file.filename}` : null;
 
-      const updated = await pool.query(
-        `UPDATE products 
-         SET nama_produk=$1, harga=$2, stok=$3, kategori_id=$4 
-         WHERE id=$5 RETURNING *`,
-        [nama_produk, harga, stok, kategori_id, id],
-      );
+      let query, params;
+      if (image) {
+        query = `UPDATE products 
+         SET nama_produk=COALESCE($1, nama_produk), 
+             harga=COALESCE($2, harga), 
+             stok=COALESCE($3, stok), 
+             kategori_id=COALESCE($4, kategori_id), 
+             image=COALESCE($5, image) 
+         WHERE id=$6 RETURNING *`;
+        params = [nama_produk, harga, stok, kategori_id, image, id];
+      } else {
+        query = `UPDATE products 
+         SET nama_produk=COALESCE($1, nama_produk), 
+             harga=COALESCE($2, harga), 
+             stok=COALESCE($3, stok), 
+             kategori_id=COALESCE($4, kategori_id) 
+         WHERE id=$5 RETURNING *`;
+        params = [nama_produk, harga, stok, kategori_id, id];
+      }
+
+      const updated = await pool.query(query, params);
 
       if (!updated.rows.length)
         return res.status(404).json({ message: "Produk tidak ditemukan." });

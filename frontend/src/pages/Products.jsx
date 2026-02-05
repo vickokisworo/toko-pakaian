@@ -17,6 +17,7 @@ export default function Products() {
   );
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [formData, setFormData] = useState({
     nama_produk: "",
     harga: "",
@@ -60,12 +61,22 @@ export default function Products() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const data = new FormData();
+      data.append("nama_produk", formData.nama_produk);
+      data.append("harga", formData.harga);
+      data.append("stok", formData.stok);
+      data.append("kategori_id", formData.kategori_id);
+      if (imageFile) {
+        data.append("image", imageFile);
+      }
+
       if (editingId) {
-        await updateProduct(editingId, formData);
+        await updateProduct(editingId, data);
       } else {
-        await createProduct(formData);
+        await createProduct(data);
       }
       setFormData({ nama_produk: "", harga: "", stok: "", kategori_id: "" });
+      setImageFile(null);
       setEditingId(null);
       setShowForm(false);
       loadProducts();
@@ -145,6 +156,7 @@ export default function Products() {
               onClick={() => {
                 setShowForm(true);
                 setEditingId(null);
+                setImageFile(null);
                 setFormData({
                   nama_produk: "",
                   harga: "",
@@ -165,6 +177,16 @@ export default function Products() {
             <div className="card" style={{ maxWidth: 500 }}>
               <h4 style={{ marginTop: 0 }}>{editingId ? "Edit Product" : "New Product"}</h4>
               <form onSubmit={handleSubmit}>
+                <div style={{ marginBottom: 10 }}>
+                  <label>Gambar Produk</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files[0])}
+                    style={{ display: "block", marginTop: 5 }}
+                  />
+                </div>
+
                 <div style={{ marginBottom: 10 }}>
                   <label>Nama Produk</label>
                   <input
@@ -231,6 +253,7 @@ export default function Products() {
                     onClick={() => {
                       setShowForm(false);
                       setEditingId(null);
+                      setImageFile(null);
                     }}
                     style={{ backgroundColor: "transparent", border: "1px solid var(--secondary)", color: "var(--secondary)", padding: "8px 16px" }}
                   >
@@ -260,10 +283,9 @@ export default function Products() {
                 flexShrink: 0 // Prevent shrinking below 240px
               }}
             >
-              {/* Random Product Image */}
               <div style={{ height: "180px", overflow: "hidden", borderBottom: "1px solid #e2e8f0" }}>
                 <img
-                  src={`https://images.unsplash.com/photo-${1515886657613 + (p.id * 1000)}?q=80&w=300&auto=format&fit=crop`}
+                  src={p.image ? `http://localhost:3000${p.image}` : `https://images.unsplash.com/photo-${1515886657613 + (p.id * 1000)}?q=80&w=300&auto=format&fit=crop`}
                   alt={p.nama_produk}
                   style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s" }}
                   onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=300&auto=format&fit=crop"; }}
