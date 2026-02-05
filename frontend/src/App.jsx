@@ -140,7 +140,7 @@ function Nav({ onRoute, onLogout, user, route }) {
           ? (scrolled ? "rgba(0,0,0,0.9)" : "transparent")
           : "rgba(0, 0, 0, 0.85)", // Semi-transparent black for other pages
         color: "white",
-        padding: "15px 30px",
+        padding: "5px 30px",
         transition: "background-color 0.3s ease",
         display: "flex",
         alignItems: "center",
@@ -149,7 +149,7 @@ function Nav({ onRoute, onLogout, user, route }) {
     >
       {/* Logo Left */}
       <div style={{ fontSize: "1.5rem", fontWeight: "bold", zIndex: 1002, display: "flex", alignItems: "center", gap: "10px" }}>
-        <span>Vicko Store</span>
+        <img src={logo} alt="Vicko Store" style={{ height: "75px", objectFit: "contain" }} />
       </div>
 
       {/* Mobile Toggle */}
@@ -279,7 +279,7 @@ function Nav({ onRoute, onLogout, user, route }) {
             /* Maybe add user info inside the mobile menu if needed, simplified for now */
           }
         `}</style>
-    </nav>
+    </nav >
   );
 }
 
