@@ -12,7 +12,7 @@ export default function Login({ onLogin }) {
   const passwordRef = React.useRef(null);
 
   const handleLogin = async (e) => {
-    e?.preventDefault(); // Optional chaining in case triggered manually without event
+    e?.preventDefault();
     setError("");
 
     if (!email.trim() || !password) {
@@ -59,64 +59,84 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto" }}>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Email</label>
+    <div className="card" style={{ maxWidth: 400, margin: "0 auto", textAlign: "center" }}>
+      <h2 style={{ color: "var(--primary-dark)", marginBottom: "var(--spacing-md)" }}>Login</h2>
+      <p style={{ color: "var(--secondary)", marginBottom: "var(--spacing-lg)", fontSize: "0.9rem" }}>
+        Welcome back! Please sign in to continue.
+      </p>
+
+      <form onSubmit={handleLogin} style={{ textAlign: "left" }}>
+        <div style={{ marginBottom: "var(--spacing-md)" }}>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, passwordRef)}
-            placeholder="Masukkan email"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
+            placeholder="example@email.com"
           />
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
+
+        <div style={{ marginBottom: "var(--spacing-lg)" }}>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Password</label>
           <input
             ref={passwordRef}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, null)}
-            placeholder="Masukkan password"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
+            placeholder="••••••••"
           />
         </div>
-        {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-        <div>
+
+        {error && (
+          <div style={{
+            color: "var(--danger)",
+            backgroundColor: "#fee2e2",
+            padding: "8px",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--spacing-md)",
+            fontSize: "0.9rem",
+            textAlign: "center"
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <button
             type="submit"
             disabled={loading}
-            style={{ width: "100%", padding: 10, marginBottom: 8 }}
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "var(--primary)",
+              color: "white",
+              border: "none",
+              fontSize: "1rem"
+            }}
           >
-            {loading ? "Sedang Login..." : "Login"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          <div style={{ display: "flex", alignItems: "center", margin: "10px 0" }}>
+            <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
+            <span style={{ padding: "0 10px", color: "var(--secondary)", fontSize: "0.8rem" }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
+          </div>
+
           <button
             type="button"
             onClick={() => setShowRegister(true)}
             style={{
               width: "100%",
-              padding: 10,
-              backgroundColor: "#4CAF50",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
+              padding: "10px",
+              backgroundColor: "transparent",
+              color: "var(--primary)",
+              border: "1px solid var(--primary)",
             }}
           >
-            Belum punya akun? Daftar di sini
+            Create an Account
           </button>
         </div>
       </form>

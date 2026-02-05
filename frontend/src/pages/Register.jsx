@@ -80,29 +80,24 @@ export default function Register({ onRegistered, onBackToLogin }) {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto" }}>
-      <h2>Daftar Akun Baru</h2>
+    <div className="card" style={{ maxWidth: 450, margin: "0 auto" }}>
+      <h2 style={{ textAlign: "center", color: "var(--primary-dark)", marginBottom: "var(--spacing-lg)" }}>Create Account</h2>
+
       <form onSubmit={handleRegister}>
-        <div style={{ marginBottom: 12 }}>
-          <label>Nama Lengkap</label>
+        <div style={{ marginBottom: "var(--spacing-md)" }}>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Full Name</label>
           <input
             type="text"
             name="nama"
             value={formData.nama}
             onChange={handleChange}
             onKeyDown={(e) => handleKeyDown(e, emailRef)}
-            placeholder="Masukkan nama lengkap"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
+            placeholder="John Doe"
           />
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>Email</label>
+        <div style={{ marginBottom: "var(--spacing-md)" }}>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Email Address</label>
           <input
             ref={emailRef}
             type="email"
@@ -110,75 +105,92 @@ export default function Register({ onRegistered, onBackToLogin }) {
             value={formData.email}
             onChange={handleChange}
             onKeyDown={(e) => handleKeyDown(e, passwordRef)}
-            placeholder="Masukkan email"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
+            placeholder="example@email.com"
           />
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label>
-          <input
-            ref={passwordRef}
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            onKeyDown={(e) => handleKeyDown(e, confirmPasswordRef)}
-            placeholder="Minimal 6 karakter"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
-          />
+        <div style={{ display: "flex", gap: "var(--spacing-md)", marginBottom: "var(--spacing-md)" }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Password</label>
+            <input
+              ref={passwordRef}
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              onKeyDown={(e) => handleKeyDown(e, confirmPasswordRef)}
+              placeholder="Min. 6 chars"
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>Confirm Password</label>
+            <input
+              ref={confirmPasswordRef}
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              onKeyDown={(e) => handleKeyDown(e, null)}
+              placeholder="Repeat password"
+            />
+          </div>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>Konfirmasi Password</label>
-          <input
-            ref={confirmPasswordRef}
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            onKeyDown={(e) => handleKeyDown(e, null)}
-            placeholder="Ulangi password"
-            style={{
-              width: "100%",
-              padding: 8,
-              marginTop: 4,
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-
-
-        {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
-        {success && (
-          <div style={{ color: "green", marginBottom: 12 }}>{success}</div>
+        {error && (
+          <div style={{
+            color: "var(--danger)",
+            backgroundColor: "#fee2e2",
+            padding: "8px",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--spacing-md)",
+            textAlign: "center"
+          }}>
+            {error}
+          </div>
         )}
 
-        <div>
+        {success && (
+          <div style={{
+            color: "var(--success)",
+            backgroundColor: "#dcfce7",
+            padding: "8px",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--spacing-md)",
+            textAlign: "center"
+          }}>
+            {success}
+          </div>
+        )}
+
+        <div style={{ marginTop: "var(--spacing-lg)", display: "flex", flexDirection: "column", gap: "10px" }}>
           <button
             type="submit"
             disabled={loading}
-            style={{ width: "100%", padding: 10, marginBottom: 8 }}
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "var(--primary)",
+              color: "white",
+              border: "none",
+              fontSize: "1rem"
+            }}
           >
-            {loading ? "Sedang Mendaftar..." : "Daftar"}
+            {loading ? "Creating Account..." : "Register"}
           </button>
+
           <button
             type="button"
             onClick={onBackToLogin}
-            style={{ width: "100%", padding: 10, backgroundColor: "#ccc" }}
+            style={{
+              width: "100%",
+              padding: "10px",
+              backgroundColor: "transparent",
+              color: "var(--secondary)",
+              border: "none",
+              textDecoration: "underline"
+            }}
           >
-            Kembali ke Login
+            Already have an account? Login
           </button>
         </div>
       </form>

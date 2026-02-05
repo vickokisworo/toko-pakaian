@@ -207,163 +207,152 @@ export default function Categories() {
         </div>
       )}
 
-      {/* ✅ Grid Kategori */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 10,
-        }}
-      >
-        {items.map((c) => (
-          <div
-            key={c.id}
-            className="card"
-            style={{
-              padding: 15,
-              border:
-                selectedCategory?.id === c.id
-                  ? "2px solid #2196F3"
-                  : "1px solid #ddd",
-              borderRadius: 5,
-              backgroundColor:
-                selectedCategory?.id === c.id ? "#e3f2fd" : "white",
-            }}
-          >
-            <strong
-              style={{
-                cursor: "pointer",
-                display: "block",
-                color: "#2196F3",
-              }}
-              onClick={() => handleSelectCategory(c)}
-            >
-              {c.nama_kategori}
-            </strong>
-            <div>ID: {c.id}</div>
+      {/* ✅ Layout Container: Categories Left, Products Right */}
+      <div style={{ display: "flex", gap: "20px", alignItems: "flex-start", flexDirection: "row", flexWrap: "wrap" }}>
 
-            {isAdmin && (
-              <div style={{ marginTop: 10 }}>
+        {/* Left Sidebar: Category List */}
+        <div style={{ flex: "1 1 250px", minWidth: "200px" }}>
+          <h4 style={{ marginTop: 0, marginBottom: "10px", color: "var(--primary-dark)" }}>Daftar Kategori</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {items.map((c) => (
+              <div
+                key={c.id}
+                className="card"
+                style={{
+                  padding: 12,
+                  border: selectedCategory?.id === c.id ? "2px solid #2196F3" : "1px solid #ddd",
+                  borderRadius: 5,
+                  backgroundColor: selectedCategory?.id === c.id ? "#e3f2fd" : "white",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+                onClick={() => handleSelectCategory(c)}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong style={{ color: selectedCategory?.id === c.id ? "#2196F3" : "inherit" }}>
+                    {c.nama_kategori}
+                  </strong>
+                  {selectedCategory?.id === c.id}
+                </div>
+
+                {isAdmin && (
+                  <div style={{ marginTop: 8, display: "flex", gap: 5 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEdit(c); }}
+                      style={{
+                        fontSize: "0.8rem",
+                        backgroundColor: "#2196F3",
+                        color: "white",
+                        padding: "4px 8px",
+                        border: "none",
+                        borderRadius: 3
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
+                      style={{
+                        fontSize: "0.8rem",
+                        backgroundColor: "#f44336",
+                        color: "white",
+                        padding: "4px 8px",
+                        border: "none",
+                        borderRadius: 3
+                      }}
+                    >
+                      Del
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Content: Products Grid */}
+        <div style={{ flex: "3 1 400px", minWidth: "300px" }}>
+          {selectedCategory ? (
+            <div
+              style={{
+                padding: 20,
+                backgroundColor: "#f8fafc",
+                borderRadius: 8,
+                border: "1px solid #e2e8f0"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
+                <h3 style={{ margin: 0 }}>
+                  Produk: <span style={{ color: "#2196F3" }}>{selectedCategory.nama_kategori}</span>
+                </h3>
                 <button
-                  onClick={() => handleEdit(c)}
+                  onClick={handleCloseProducts}
                   style={{
-                    marginRight: 5,
-                    backgroundColor: "#2196F3",
+                    padding: "6px 12px",
+                    backgroundColor: "#ef4444",
                     color: "white",
-                    padding: 5,
+                    border: "none",
+                    borderRadius: 4,
+                    cursor: "pointer"
                   }}
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(c.id)}
-                  style={{
-                    backgroundColor: "#f44336",
-                    color: "white",
-                    padding: 5,
-                  }}
-                >
-                  Delete
+                  &times; Close
                 </button>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
 
-      {/* ✅ Panel Produk (muncul ketika kategori dipilih) */}
-      {selectedCategory && (
-        <div
-          style={{
-            marginTop: 30,
-            padding: 20,
-            backgroundColor: "#f5f5f5",
-            borderRadius: 5,
-            border: "2px solid #2196F3",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 15,
-            }}
-          >
-            <h4 style={{ margin: 0 }}>
-              Produk dalam kategori:{" "}
-              <span style={{ color: "#2196F3" }}>
-                {selectedCategory.nama_kategori}
-              </span>
-            </h4>
-            <button
-              onClick={handleCloseProducts}
-              style={{
-                padding: "8px 15px",
-                backgroundColor: "#757575",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              ✕ Tutup
-            </button>
-          </div>
-
-          {loadingProducts ? (
-            <div>Loading products...</div>
-          ) : categoryProducts.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: 30,
-                color: "#666",
-              }}
-            >
-              Tidak ada produk dalam kategori ini
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-                gap: 15,
-              }}
-            >
-              {categoryProducts.map((p) => (
+              {loadingProducts ? (
+                <div>Loading products...</div>
+              ) : categoryProducts.length === 0 ? (
+                <div style={{ padding: 20, textAlign: "center", color: "#666" }}>
+                  Tidak ada produk di kategori ini.
+                </div>
+              ) : (
                 <div
-                  key={p.id}
                   style={{
-                    padding: 15,
-                    border: "1px solid #ddd",
-                    borderRadius: 5,
-                    backgroundColor: "white",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                    gap: 15
                   }}
                 >
-                  <strong
-                    style={{
-                      fontSize: "1.1em",
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
-                    {p.nama_produk}
-                  </strong>
-                  <div style={{ marginBottom: 5 }}>
-                    <span style={{ fontWeight: "bold", color: "#4CAF50" }}>
-                      Rp {p.harga?.toLocaleString() || 0}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "0.9em", color: "#666" }}>
-                    Stok: {p.stok}
-                  </div>
+                  {categoryProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="card"
+                      style={{
+                        padding: 0,
+                        overflow: "hidden",
+                        backgroundColor: "white",
+                        border: "1px solid #ddd"
+                      }}
+                    >
+                      {/* Placeholder Image */}
+                      <div style={{ height: "120px", backgroundColor: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: "2rem" }}>📦</span>
+                      </div>
+                      <div style={{ padding: 12 }}>
+                        <strong style={{ display: "block", marginBottom: 4 }}>{p.nama_produk}</strong>
+                        <div style={{ color: "green", fontWeight: "bold" }}>Rp {p.harga?.toLocaleString()}</div>
+                        <div style={{ fontSize: "0.9rem", color: "#666" }}>Stok: {p.stok}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+            </div>
+          ) : (
+            <div style={{
+              padding: 40,
+              textAlign: "center",
+              border: "2px dashed #e2e8f0",
+              borderRadius: 8,
+              color: "#94a3b8"
+            }}>
+              Select a category to view products
             </div>
           )}
         </div>
-      )}
+
+      </div>
     </div>
   );
 }

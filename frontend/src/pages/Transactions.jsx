@@ -4,11 +4,13 @@ import {
   createTransaction,
   getTransactions,
   getTransactionDetail,
-  updateTransaction,
+  getCategories,
 } from "../api";
 
 export default function Transactions({ user }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [jumlahBayar, setJumlahBayar] = useState(0);
   const [transactions, setTransactions] = useState([]);
@@ -25,10 +27,14 @@ export default function Transactions({ user }) {
 
   async function loadData() {
     try {
-      const p = await getProducts();
+      const [p, t, c] = await Promise.all([
+        getProducts(),
+        getTransactions(),
+        getCategories(),
+      ]);
       setProducts(p || []);
-      const t = await getTransactions();
       setTransactions(t || []);
+      setCategories(c || []);
       setError(null);
     } catch (e) {
       setError(e.message);
@@ -114,7 +120,6 @@ export default function Transactions({ user }) {
       return;
     }
 
-    // ✅ VALIDATE: Only search if it's a valid number
     const searchId = parseInt(txSearch);
     if (isNaN(searchId)) {
       setError("ID transaksi harus berupa angka");
@@ -143,169 +148,203 @@ export default function Transactions({ user }) {
   const canManageAllTransactions = userRole === "admin" || userRole === "kasir";
   const isPelanggan = userRole === "pelanggan";
 
+  // Filter products by category
+  const filteredProducts = selectedCategory
+    ? products.filter((p) => p.kategori_id === selectedCategory)
+    : products;
+
   return (
     <div>
-      <h3>Transactions</h3>
-      {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-md)", flexWrap: "wrap", gap: "10px" }}>
+        <h3 style={{ margin: 0, color: "var(--primary-dark)" }}>Transactions</h3>
 
-      <div style={{ marginBottom: 12 }}>
-        <input
-          placeholder="Cari transaksi by id (angka)"
-          value={txSearch}
-          onChange={(e) => setTxSearch(e.target.value)}
-          type="text"
-          style={{ padding: 6, width: 180, marginRight: 8 }}
-        />
-        <button onClick={handleSearch} style={{ padding: 6 }}>
-          Cari
-        </button>
-        <button onClick={handleClearSearch} style={{ padding: 6, marginLeft: 8 }}>
-          Clear
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <input
+            placeholder="Search ID (Number)"
+            value={txSearch}
+            onChange={(e) => setTxSearch(e.target.value)}
+            type="text"
+            style={{ width: 150 }}
+          />
+          <button onClick={handleSearch} style={{ backgroundColor: "var(--secondary)", color: "white", border: "none" }}>
+            Search
+          </button>
+          <button onClick={handleClearSearch} style={{ backgroundColor: "transparent", color: "var(--secondary)", border: "1px solid var(--secondary)" }}>
+            Clear
+          </button>
+        </div>
       </div>
 
-      {/* Sidebar untuk create/edit transaction */}
-      <div style={{ display: "flex", gap: 20 }}>
+      {error && <div style={{ color: "var(--danger)", marginBottom: 10, padding: 8, backgroundColor: "#fee2e2", borderRadius: 4 }}>{error}</div>}
+
+      {/* Main Layout: Stack on mobile, Side-by-side on desktop */}
+      <div style={{ display: "flex", gap: "var(--spacing-lg)", flexDirection: "row", flexWrap: "wrap" }}>
+
         {!isPelanggan && userRole !== "admin" && (
           <>
-            <div style={{ flex: 1 }}>
-              <h4>Products</h4>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                  gap: 10,
-                }}
-              >
-                {products.map((p) => (
-                  <div key={p.id} className="card" style={{ padding: 10 }}>
-                    <strong>{p.nama_produk}</strong>
-                    <div>Rp {p.harga?.toLocaleString()}</div>
-                    <div style={{ fontSize: "0.8em", color: "#666" }}>
-                      Stok: {p.stok}
-                    </div>
+            {/* Products Column */}
+            <div style={{ flex: "2 1 500px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-md)" }}>
+                <h4 style={{ margin: 0 }}>Available Products</h4>
+                {/* Category Filter Chips */}
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", maxWidth: "60%", paddingBottom: 4 }}>
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "20px",
+                      border: "1px solid var(--primary)",
+                      backgroundColor: selectedCategory === null ? "var(--primary)" : "white",
+                      color: selectedCategory === null ? "white" : "var(--primary)",
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    All
+                  </button>
+                  {categories.map(c => (
                     <button
-                      onClick={() => addToCart(p)}
-                      disabled={p.stok <= 0}
+                      key={c.id}
+                      onClick={() => setSelectedCategory(c.id)}
                       style={{
-                        marginTop: 8,
-                        backgroundColor: p.stok <= 0 ? "#ccc" : "#4CAF50",
-                        color: "white",
-                        padding: 5,
-                        width: "100%",
-                        cursor: p.stok <= 0 ? "not-allowed" : "pointer",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        border: "1px solid var(--primary)",
+                        backgroundColor: selectedCategory === c.id ? "var(--primary)" : "white",
+                        color: selectedCategory === c.id ? "white" : "var(--primary)",
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap"
                       }}
                     >
-                      {p.stok <= 0 ? "Stok Habis" : "Add"}
+                      {c.nama_kategori}
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                className="grid-responsive"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", // Wider cards for landscape feel
+                  gap: "var(--spacing-md)",
+                }}
+              >
+                {filteredProducts.map((p) => (
+                  <div key={p.id} className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    {/* Placeholder Image */}
+                    <div style={{ height: "140px", backgroundColor: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid #f1f5f9" }}>
+                      <span style={{ color: "#94a3b8", fontSize: "2rem" }}>📷</span>
+                    </div>
+
+                    <div style={{ padding: "var(--spacing-md)", flex: 1, display: "flex", flexDirection: "column" }}>
+                      <strong style={{ fontSize: "1.05rem", marginBottom: 4 }}>{p.nama_produk}</strong>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <span style={{ color: "var(--primary)", fontWeight: "bold" }}>Rp {p.harga?.toLocaleString()}</span>
+                        <span style={{ fontSize: "0.8rem", color: "#64748b", backgroundColor: "#f1f5f9", padding: "2px 6px", borderRadius: 4 }}>
+                          {p.nama_kategori}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: "0.85em", color: "var(--secondary)", marginBottom: "auto" }}>
+                        Stok: {p.stok}
+                      </div>
+
+                      <button
+                        onClick={() => addToCart(p)}
+                        disabled={p.stok <= 0}
+                        style={{
+                          marginTop: "var(--spacing-sm)",
+                          backgroundColor: p.stok <= 0 ? "#cbd5e1" : "var(--success)",
+                          color: "white",
+                          padding: "8px",
+                          width: "100%",
+                          border: "none",
+                          borderRadius: "var(--radius-sm)",
+                          cursor: p.stok <= 0 ? "not-allowed" : "pointer"
+                        }}
+                      >
+                        {p.stok <= 0 ? "Out of Stock" : "Add to Cart"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Cart Sidebar */}
-            <div style={{ width: 350, border: "1px solid #ddd", padding: 15 }}>
-              <h4>Cart</h4>
+            {/* Cart Column */}
+            <div className="card" style={{ flex: "1 1 300px", height: "fit-content", padding: "var(--spacing-md)" }}>
+              <h4 style={{ marginTop: 0 }}>Current Cart</h4>
               {cart.length === 0 ? (
-                <div style={{ color: "#666" }}>Keranjang kosong</div>
+                <div style={{ color: "var(--secondary)", padding: "20px 0", textAlign: "center" }}>Cart is empty</div>
               ) : (
                 <>
-                  {cart.map((c) => (
-                    <div
-                      key={c.product_id}
-                      style={{
-                        marginBottom: 10,
-                        padding: 8,
-                        backgroundColor: "#f9f9f9",
-                        borderRadius: 4,
-                      }}
-                    >
+                  <div style={{ maxHeight: "300px", overflowY: "auto", paddingRight: "5px" }}>
+                    {cart.map((c) => (
                       <div
+                        key={c.product_id}
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
+                          marginBottom: 10,
+                          padding: 8,
+                          backgroundColor: "var(--background)",
+                          borderRadius: "var(--radius-sm)",
+                          border: "1px solid #e2e8f0"
                         }}
                       >
-                        <strong>{c.nama}</strong>
-                        <button
-                          onClick={() => removeFromCart(c.product_id)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "red",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div style={{ fontSize: "0.9em", marginBottom: 5 }}>
-                        Harga: Rp {c.harga_satuan?.toLocaleString()}
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5,
-                        }}
-                      >
-                        <button
-                          onClick={() => updateCartQty(c.product_id, c.qty - 1)}
-                          style={{ width: 30, padding: 2 }}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={c.qty}
-                          onChange={(e) =>
-                            updateCartQty(
-                              c.product_id,
-                              parseInt(e.target.value) || 0,
-                            )
-                          }
-                          style={{ width: 50, padding: 2 }}
-                          min="1"
-                        />
-                        <button
-                          onClick={() => updateCartQty(c.product_id, c.qty + 1)}
-                          style={{ width: 30, padding: 2 }}
-                        >
-                          +
-                        </button>
-                        <span
-                          style={{ marginLeft: "auto", fontWeight: "bold" }}
-                        >
-                          Rp {(c.qty * c.harga_satuan)?.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <strong style={{ fontSize: "0.95rem" }}>{c.nama}</strong>
+                          <button
+                            onClick={() => removeFromCart(c.product_id)}
+                            style={{ background: "none", border: "none", color: "var(--danger)", padding: 0, fontSize: "1.2rem", lineHeight: 1 }}
+                          >
+                            &times;
+                          </button>
+                        </div>
 
-                  <div
-                    style={{
-                      borderTop: "2px solid #ddd",
-                      paddingTop: 10,
-                      marginTop: 10,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.1em",
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                      }}
-                    >
-                      Total: Rp {totalPrice?.toLocaleString()}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: 4 }}>
+                            <button
+                              onClick={() => updateCartQty(c.product_id, c.qty - 1)}
+                              style={{ width: 28, padding: 0, height: 28, background: "none", border: "none" }}
+                            >
+                              -
+                            </button>
+                            <input
+                              type="number"
+                              value={c.qty}
+                              onChange={(e) => updateCartQty(c.product_id, parseInt(e.target.value) || 0)}
+                              style={{ width: 40, padding: 0, textAlign: "center", border: "none", background: "transparent", margin: 0 }}
+                              min="1"
+                            />
+                            <button
+                              onClick={() => updateCartQty(c.product_id, c.qty + 1)}
+                              style={{ width: 28, padding: 0, height: 28, background: "none", border: "none" }}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <span style={{ marginLeft: "auto", fontWeight: "bold", color: "var(--primary)" }}>
+                            Rp {(c.qty * c.harga_satuan)?.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: 10, marginTop: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.1rem", fontWeight: "bold", marginBottom: 15 }}>
+                      <span>Total:</span>
+                      <span>Rp {totalPrice?.toLocaleString()}</span>
                     </div>
 
-                    <div style={{ marginBottom: 10 }}>
-                      <label>Jumlah Bayar</label>
+                    <div style={{ marginBottom: 15 }}>
+                      <label style={{ fontSize: "0.9rem", color: "var(--secondary)" }}>Amount Paid</label>
                       <input
                         type="number"
                         value={jumlahBayar}
                         onChange={(e) => setJumlahBayar(e.target.value)}
-                        style={{ width: "100%", padding: 8 }}
+                        style={{ marginTop: 4 }}
                         min="0"
                       />
                     </div>
@@ -314,19 +353,16 @@ export default function Transactions({ user }) {
                       <div
                         style={{
                           marginBottom: 10,
-                          backgroundColor: change < 0 ? "#ffebee" : "#e8f5e9",
+                          backgroundColor: change < 0 ? "#fee2e2" : "#dcfce7",
                           padding: 10,
                           borderRadius: 4,
+                          fontSize: "0.9rem"
                         }}
                       >
                         {change < 0 ? (
-                          <div style={{ color: "red" }}>
-                            Kurang: Rp {Math.abs(change)?.toLocaleString()}
-                          </div>
+                          <div style={{ color: "var(--danger)" }}>Deficit: Rp {Math.abs(change)?.toLocaleString()}</div>
                         ) : (
-                          <div style={{ color: "green" }}>
-                            Kembalian: Rp {change?.toLocaleString()}
-                          </div>
+                          <div style={{ color: "var(--success)" }}>Change: Rp {change?.toLocaleString()}</div>
                         )}
                       </div>
                     )}
@@ -336,18 +372,15 @@ export default function Transactions({ user }) {
                       disabled={cart.length === 0 || change < 0}
                       style={{
                         width: "100%",
-                        padding: 10,
-                        backgroundColor: "#2196F3",
+                        padding: 12,
+                        backgroundColor: "var(--primary)",
                         color: "white",
-                        fontWeight: "bold",
-                        cursor:
-                          cart.length === 0 || change < 0
-                            ? "not-allowed"
-                            : "pointer",
-                        opacity: cart.length === 0 || change < 0 ? 0.5 : 1,
+                        border: "none",
+                        cursor: cart.length === 0 || change < 0 ? "not-allowed" : "pointer",
+                        opacity: cart.length === 0 || change < 0 ? 0.6 : 1,
                       }}
                     >
-                      Checkout
+                      Process Checkout
                     </button>
                   </div>
                 </>
@@ -357,49 +390,47 @@ export default function Transactions({ user }) {
         )}
       </div>
 
-      {/* Transaction History */}
-      <div style={{ marginTop: 30 }}>
-        <h4>
+      {/* Transaction History Section */}
+      <div style={{ marginTop: "var(--spacing-xl)" }}>
+        <h4 style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8 }}>
           {canManageAllTransactions ? "Transaction History" : "My Transactions"}
         </h4>
+
         {transactions.length === 0 ? (
-          <div style={{ color: "#666" }}>Belum ada transaksi</div>
+          <div style={{ color: "var(--secondary)", fontStyle: "italic" }}>No transactions found</div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 15,
-            }}
-          >
+          <div className="grid-responsive" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
             {transactions.map((t) => (
-              <div
-                key={t.id}
-                className="card"
-                style={{ padding: 15, cursor: "pointer" }}
-              >
-                <div>
-                  <strong>Kode: {t.kode_transaksi}</strong>
+              <div key={t.id} className="card" style={{ padding: "var(--spacing-md)", position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <strong>#{t.kode_transaksi}</strong>
+                  <span style={{ fontSize: "0.8em", color: "var(--secondary)" }}>
+                    {new Date(t.tanggal).toLocaleDateString()}
+                  </span>
                 </div>
-                <div>Total: Rp {t.total_harga?.toLocaleString()}</div>
-                <div>Bayar: Rp {t.jumlah_bayar?.toLocaleString()}</div>
-                {t.kembalian > 0 && (
-                  <div>Kembalian: Rp {t.kembalian?.toLocaleString()}</div>
-                )}
-                <div style={{ fontSize: "0.9em", color: "#666", marginTop: 5 }}>
-                  {new Date(t.tanggal).toLocaleString()}
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ color: "var(--secondary)" }}>Total:</span>
+                  <strong>Rp {t.total_harga?.toLocaleString()}</strong>
                 </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ color: "var(--secondary)" }}>Paid:</span>
+                  <span>Rp {t.jumlah_bayar?.toLocaleString()}</span>
+                </div>
+
                 <button
                   onClick={() => setSelectedTransaction(t)}
                   style={{
-                    marginTop: 10,
-                    backgroundColor: "#2196F3",
-                    color: "white",
-                    padding: 5,
+                    marginTop: 12,
+                    backgroundColor: "transparent",
+                    color: "var(--primary)",
+                    border: "1px solid var(--primary)",
+                    padding: "6px",
                     width: "100%",
+                    fontSize: "0.9rem"
                   }}
                 >
-                  View Detail
+                  View Details
                 </button>
               </div>
             ))}
@@ -416,56 +447,71 @@ export default function Transactions({ user }) {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             zIndex: 1000,
+            padding: "20px"
           }}
           onClick={() => setSelectedTransaction(null)}
         >
           <div
+            className="card"
             style={{
-              backgroundColor: "white",
-              padding: 20,
-              borderRadius: 8,
+              width: "100%",
               maxWidth: 500,
-              maxHeight: "80vh",
+              maxHeight: "90vh",
               overflow: "auto",
+              padding: 0, // Reset padding for custom header
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3>Transaction Detail</h3>
-            <div>
-              <strong>Kode:</strong> {selectedTransaction.kode_transaksi}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--background)" }}>
+              <h3 style={{ margin: 0 }}>Transaction Details</h3>
+              <button onClick={() => setSelectedTransaction(null)} style={{ background: "none", border: "none", fontSize: "1.5rem", lineHeight: 1, cursor: "pointer" }}>&times;</button>
             </div>
-            <div>
-              <strong>Total:</strong> Rp{" "}
-              {selectedTransaction.total_harga?.toLocaleString()}
+
+            <div style={{ padding: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+                <div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--secondary)" }}>Transaction Code</div>
+                  <div style={{ fontWeight: "bold" }}>{selectedTransaction.kode_transaksi}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--secondary)" }}>Date</div>
+                  <div style={{ fontWeight: "bold" }}>{new Date(selectedTransaction.tanggal).toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: "var(--background)", padding: "12px", borderRadius: "8px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span>Total Amount</span>
+                  <strong>Rp {selectedTransaction.total_harga?.toLocaleString()}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span>Amount Paid</span>
+                  <span>Rp {selectedTransaction.jumlah_bayar?.toLocaleString()}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px dashed #cbd5e1", paddingTop: 8 }}>
+                  <span>Change</span>
+                  <span style={{ color: "var(--success)", fontWeight: "bold" }}>Rp {selectedTransaction.kembalian?.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  backgroundColor: "var(--secondary)",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                Close
+              </button>
             </div>
-            <div>
-              <strong>Bayar:</strong> Rp{" "}
-              {selectedTransaction.jumlah_bayar?.toLocaleString()}
-            </div>
-            <div>
-              <strong>Kembalian:</strong> Rp{" "}
-              {selectedTransaction.kembalian?.toLocaleString()}
-            </div>
-            <div>
-              <strong>Tanggal:</strong>{" "}
-              {new Date(selectedTransaction.tanggal).toLocaleString()}
-            </div>
-            <button
-              onClick={() => setSelectedTransaction(null)}
-              style={{
-                marginTop: 15,
-                padding: 10,
-                backgroundColor: "#ccc",
-                width: "100%",
-              }}
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
