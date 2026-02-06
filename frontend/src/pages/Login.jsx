@@ -59,7 +59,7 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 400, margin: "0 auto", textAlign: "center" }}>
+    <div className="card" style={{ maxWidth: 400, margin: "0 auto", textAlign: "center", padding: window.innerWidth <= 480 ? "16px" : "24px" }}>
       <h2 style={{ color: "var(--primary-dark)", marginBottom: "var(--spacing-md)" }}>Login</h2>
       <p style={{ color: "var(--secondary)", marginBottom: "var(--spacing-lg)", fontSize: "0.9rem" }}>
         Welcome back! Please sign in to continue.

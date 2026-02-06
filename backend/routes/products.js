@@ -136,6 +136,9 @@ router.get(
  *               kategori_id:
  *                 type: integer
  *                 example: 1
+ *               deskripsi:
+ *                 type: string
+ *                 example: Laptop spesifikasi tinggi untuk gaming dan desain
  *     responses:
  *       201:
  *         description: Produk berhasil ditambahkan.
@@ -149,13 +152,13 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      const { nama_produk, harga, stok, kategori_id } = req.body;
+      const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
       const image = req.file ? `/uploads/products/${req.file.filename}` : null;
 
       const newProduct = await pool.query(
-        `INSERT INTO products (nama_produk, harga, stok, kategori_id, image) 
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [nama_produk, harga, stok, kategori_id, image],
+        `INSERT INTO products (nama_produk, harga, stok, kategori_id, image, deskripsi) 
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [nama_produk, harga, stok, kategori_id, image, deskripsi],
       );
       res.status(201).json(newProduct.rows[0]);
     } catch (err) {
@@ -207,7 +210,7 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { nama_produk, harga, stok, kategori_id } = req.body;
+      const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
       const image = req.file ? `/uploads/products/${req.file.filename}` : null;
 
       let query, params;
@@ -217,17 +220,19 @@ router.put(
              harga=COALESCE($2, harga), 
              stok=COALESCE($3, stok), 
              kategori_id=COALESCE($4, kategori_id), 
-             image=COALESCE($5, image) 
-         WHERE id=$6 RETURNING *`;
-        params = [nama_produk, harga, stok, kategori_id, image, id];
+             image=COALESCE($5, image),
+             deskripsi=COALESCE($6, deskripsi)
+         WHERE id=$7 RETURNING *`;
+        params = [nama_produk, harga, stok, kategori_id, image, deskripsi, id];
       } else {
         query = `UPDATE products 
          SET nama_produk=COALESCE($1, nama_produk), 
              harga=COALESCE($2, harga), 
              stok=COALESCE($3, stok), 
-             kategori_id=COALESCE($4, kategori_id) 
-         WHERE id=$5 RETURNING *`;
-        params = [nama_produk, harga, stok, kategori_id, id];
+             kategori_id=COALESCE($4, kategori_id),
+             deskripsi=COALESCE($5, deskripsi)
+         WHERE id=$6 RETURNING *`;
+        params = [nama_produk, harga, stok, kategori_id, deskripsi, id];
       }
 
       const updated = await pool.query(query, params);

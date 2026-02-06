@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Footer() {
+export default function Footer({ user }) {
     const scrollToHash = (hash) => {
         window.location.hash = hash;
     };
@@ -17,7 +17,7 @@ export default function Footer() {
                 maxWidth: "1200px",
                 margin: "0 auto",
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))",
                 gap: "40px",
                 textAlign: "left"
             }}>
@@ -29,7 +29,7 @@ export default function Footer() {
                     </h4>
                     <p style={{ marginBottom: "10px", color: "#9ca3af" }}>
                         Do you have any questions or suggestions?<br />
-                        <a href="mailto:support@vickostore.com" style={{ color: "#f3f4f6", textDecoration: "none" }}>support@vickostore.com</a>
+                        <a href="mailto:vickokisworo@gmail.com" style={{ color: "#f3f4f6", textDecoration: "none" }}>vickokisworo@gmail.com</a>
                     </p>
                     <p style={{ color: "#9ca3af" }}>
                         Do you need support? Give us a call.<br />
@@ -52,9 +52,25 @@ export default function Footer() {
                         <li>
                             <button onClick={() => scrollToHash("#/categories")} style={linkStyle}>Categories</button>
                         </li>
-                        <li>
-                            <button onClick={() => scrollToHash("#/transactions")} style={linkStyle}>Transactions</button>
-                        </li>
+
+                        {user?.role !== "pelanggan" && (
+                            <>
+                                <li>
+                                    <button onClick={() => scrollToHash("#/transactions")} style={linkStyle}>Transactions</button>
+                                </li>
+
+                            </>
+                        )}
+                        {user?.role === "admin" && (
+                            <>
+                                <li>
+                                    <button onClick={() => scrollToHash("#/reports")} style={linkStyle}>Reports</button>
+                                </li>
+                                <li>
+                                    <button onClick={() => scrollToHash("#/users")} style={linkStyle}>Users</button>
+                                </li>
+                            </>
+                        )}
                     </ul>
                 </div>
 
@@ -66,7 +82,7 @@ export default function Footer() {
                     <p style={{ color: "#9ca3af", marginBottom: "15px" }}>
                         Get the latest updates and offers.
                     </p>
-                    <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
+                    <div style={{ display: "flex", flexDirection: window.innerWidth <= 480 ? "column" : "row", gap: "10px", marginBottom: "25px" }}>
                         <input
                             type="email"
                             placeholder="Your email"
@@ -138,7 +154,7 @@ export default function Footer() {
                 color: "#6b7280",
                 fontSize: "0.875rem"
             }}>
-                <p>&copy; {new Date().getFullYear()} Vicko Store. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} Styla. All rights reserved.</p>
             </div>
         </footer>
     );

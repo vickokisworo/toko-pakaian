@@ -86,96 +86,127 @@ export default function Users() {
       {error && <div style={{ color: "var(--danger)", marginBottom: 10, padding: 8, backgroundColor: "#fee2e2", borderRadius: 4 }}>{error}</div>}
 
       <div style={{ marginBottom: "var(--spacing-lg)" }}>
-        {!showForm ? (
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setEditingId(null);
-              setFormData({
-                nama: "",
-                email: "",
-                password: "",
-                role: "pelanggan",
-              });
-            }}
+        <button
+          onClick={() => {
+            setShowForm(true);
+            setEditingId(null);
+            setFormData({
+              nama: "",
+              email: "",
+              password: "",
+              role: "pelanggan",
+            });
+          }}
+          style={{
+            backgroundColor: "var(--success)",
+            color: "white",
+            padding: "10px 16px",
+            border: "none",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer"
+          }}
+        >
+          + Add New User
+        </button>
+
+        {showForm && (
+          <div
             style={{
-              backgroundColor: "var(--success)",
-              color: "white",
-              padding: "10px 16px",
-              border: "none"
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+              padding: "20px"
+            }}
+            onClick={() => {
+              setShowForm(false);
+              setEditingId(null);
             }}
           >
-            + Add New User
-          </button>
-        ) : (
-          <div className="card" style={{ maxWidth: 500 }}>
-            <h4 style={{ marginTop: 0 }}>{editingId ? "Edit User" : "New User"}</h4>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 10 }}>
-                <label>Nama</label>
-                <input
-                  type="text"
-                  name="nama"
-                  value={formData.nama}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+            <div
+              className="card"
+              style={{
+                maxWidth: 500,
+                width: "100%",
+                backgroundColor: "white",
+                margin: 0
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 style={{ marginTop: 0 }}>{editingId ? "Edit User" : "New User"}</h4>
+              <form onSubmit={handleSubmit}>
+                <div style={{ marginBottom: 10 }}>
+                  <label>Nama</label>
+                  <input
+                    type="text"
+                    name="nama"
+                    value={formData.nama}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: 10 }}>
-                <label>Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+                <div style={{ marginBottom: 10 }}>
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-              <div style={{ marginBottom: 10 }}>
-                <label>
-                  Password {editingId && <span style={{ fontSize: "0.8em", color: "var(--secondary)" }}>(Leave blank to keep current)</span>}
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required={!editingId}
-                />
-              </div>
+                <div style={{ marginBottom: 10 }}>
+                  <label>
+                    Password {editingId && <span style={{ fontSize: "0.8em", color: "var(--secondary)" }}>(Leave blank to keep current)</span>}
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required={!editingId}
+                  />
+                </div>
 
-              <div style={{ marginBottom: 15 }}>
-                <label>Role</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "var(--radius-md)" }}
-                >
-                  <option value="pelanggan">Pelanggan</option>
-                  <option value="kasir">Kasir</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+                <div style={{ marginBottom: 15 }}>
+                  <label>Role</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "var(--radius-md)" }}
+                  >
+                    <option value="pelanggan">Pelanggan</option>
+                    <option value="kasir">Kasir</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <button type="submit" style={{ backgroundColor: "var(--primary)", color: "white", border: "none", padding: "8px 16px" }}>
-                  {editingId ? "Update" : "Create"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingId(null);
-                  }}
-                  style={{ backgroundColor: "transparent", border: "1px solid var(--secondary)", color: "var(--secondary)", padding: "8px 16px" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button type="submit" style={{ backgroundColor: "var(--primary)", color: "white", border: "none", padding: "8px 16px", cursor: "pointer", borderRadius: "var(--radius-md)" }}>
+                    {editingId ? "Update" : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingId(null);
+                    }}
+                    style={{ backgroundColor: "transparent", border: "1px solid var(--secondary)", color: "var(--secondary)", padding: "8px 16px", cursor: "pointer", borderRadius: "var(--radius-md)" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>

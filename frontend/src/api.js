@@ -228,6 +228,10 @@ export async function deleteUser(id) {
   return request(`/users/${id}`, { method: "DELETE" });
 }
 
+export async function getSalesReport() {
+  return request(`/reports/sales`, { method: "GET" });
+}
+
 export default {
   login,
   register,

@@ -18,12 +18,14 @@ const userRoutes = require("./routes/users");
 const categoryRoutes = require("./routes/categories");
 const productRoutes = require("./routes/products");
 const transactionRoutes = require("./routes/transactions");
+const reportsRoutes = require("./routes/reports");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/reports", reportsRoutes);
 
 const swaggerDocs = require("./swagger");
 swaggerDocs(app);

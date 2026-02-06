@@ -4,6 +4,7 @@ import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Transactions from "./pages/Transactions";
 import Users from "./pages/Users";
+import Reports from "./pages/Reports";
 import { logout } from "./api";
 import Footer from "./components/Footer";
 import logo from "./assets/logo/1000222878-removebg-preview.png";
@@ -137,8 +138,8 @@ function Nav({ onRoute, onLogout, user, route }) {
         width: "100%",
         zIndex: 1000,
         backgroundColor: isDashboard
-          ? (scrolled ? "rgba(0,0,0,0.9)" : "transparent")
-          : "rgba(0, 0, 0, 0.85)", // Semi-transparent black for other pages
+          ? (scrolled ? "rgba(0,0,0,0.8)" : "transparent")
+          : "rgba(0, 0, 0, 0.80)", // Semi-transparent black for other pages
         color: "white",
         padding: "5px 30px",
         transition: "background-color 0.3s ease",
@@ -186,6 +187,9 @@ function Nav({ onRoute, onLogout, user, route }) {
         <button onClick={() => handleNavClick("#/categories")} className="nav-link-custom">Categories</button>
         {user?.role !== "pelanggan" && (
           <button onClick={() => handleNavClick("#/transactions")} className="nav-link-custom">Transactions</button>
+        )}
+        {user?.role === "admin" && (
+          <button onClick={() => handleNavClick("#/reports")} className="nav-link-custom">Reports</button>
         )}
         {user?.role === "admin" && (
           <button onClick={() => handleNavClick("#/users")} className="nav-link-custom">Users</button>
@@ -362,6 +366,12 @@ export default function App() {
                 Access Denied: Customers cannot access partial Transactions page.
               </div>
             )}
+            {route === "#/reports" && user?.role === "admin" && <Reports />}
+            {route === "#/reports" && user?.role !== "admin" && (
+              <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
+                Access Denied: Only Admin can access Reports page
+              </div>
+            )}
             {route === "#/users" && user?.role === "admin" && <Users />}
             {route === "#/users" && user?.role !== "admin" && (
               <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
@@ -372,7 +382,7 @@ export default function App() {
         )}
       </main>
 
-      <Footer />
+      <Footer user={user} />
     </div>
   );
 }

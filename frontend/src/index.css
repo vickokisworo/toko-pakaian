@@ -149,8 +149,96 @@ select:focus {
   gap: var(--spacing-md);
 }
 
-@media (max-width: 640px) {
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
   .container {
     padding: var(--spacing-sm);
+  }
+
+  /* Touch-friendly buttons */
+  button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  /* Responsive inputs */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Responsive cards */
+  .card {
+    padding: var(--spacing-md);
+  }
+
+  /* Responsive grid */
+  .grid-responsive {
+    grid-template-columns: 1fr;
+  }
+
+  /* Hide desktop elements */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Stack flex items on mobile */
+  .flex-mobile-column {
+    flex-direction: column !important;
+  }
+
+  /* Full width on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  /* Smaller text on mobile */
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  h4 {
+    font-size: 1.1rem;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal-content {
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+    margin: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+  }
+
+  .container {
+    padding: 8px;
+  }
+
+  /* Even smaller text on very small screens */
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
   }
 }

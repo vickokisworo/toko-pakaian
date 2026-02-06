@@ -208,7 +208,7 @@ export default function Categories() {
       )}
 
       {/* ✅ Layout Container: Categories Left, Products Right */}
-      <div style={{ display: "flex", gap: "20px", alignItems: "flex-start", flexDirection: "row", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "20px", alignItems: "flex-start", flexDirection: window.innerWidth <= 768 ? "column" : "row", flexWrap: "wrap" }}>
 
         {/* Left Sidebar: Category List */}
         <div style={{ flex: "1 1 250px", minWidth: "200px" }}>
@@ -310,7 +310,7 @@ export default function Categories() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                    gridTemplateColumns: window.innerWidth <= 480 ? "1fr" : window.innerWidth <= 768 ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(200px, 1fr))",
                     gap: 15
                   }}
                 >
@@ -325,9 +325,35 @@ export default function Categories() {
                         border: "1px solid #ddd"
                       }}
                     >
-                      {/* Placeholder Image */}
-                      <div style={{ height: "120px", backgroundColor: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: "2rem" }}>📦</span>
+                      {/* Product Image */}
+                      <div style={{ height: "180px", backgroundColor: "#e2e8f0", overflow: "hidden" }}>
+                        {p.image ? (
+                          <img
+                            src={`http://localhost:3000${p.image}`}
+                            alt={p.nama_produk}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover"
+                            }}
+                            onError={(e) => {
+                              e.target.src = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=300&auto=format&fit=crop";
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={`https://images.unsplash.com/photo-${1515886657613 + (p.id * 1000)}?q=80&w=300&auto=format&fit=crop`}
+                            alt={p.nama_produk}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover"
+                            }}
+                            onError={(e) => {
+                              e.target.src = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=300&auto=format&fit=crop";
+                            }}
+                          />
+                        )}
                       </div>
                       <div style={{ padding: 12 }}>
                         <strong style={{ display: "block", marginBottom: 4 }}>{p.nama_produk}</strong>

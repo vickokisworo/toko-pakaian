@@ -17,7 +17,6 @@ export default function Transactions({ user }) {
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [editingTransactionId, setEditingTransactionId] = useState(null); // New state for edit mode
   const [txSearch, setTxSearch] = useState("");
 
   const userRole =
@@ -116,76 +115,6 @@ export default function Transactions({ user }) {
     }
   };
 
-  const handleStartEdit = async (transaction) => {
-    try {
-      // Fetch fresh details with items
-      const detail = await getTransactionDetail(transaction.id);
-
-      // Populate cart with existing items
-      setCart(detail.items.map(item => ({
-        product_id: item.product_id,
-        qty: item.qty,
-        harga_satuan: item.harga_satuan,
-        nama: item.nama_produk || "Product " + item.product_id
-      })));
-
-      setJumlahBayar(detail.jumlah_bayar);
-      setEditingTransactionId(transaction.id);
-
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
-      setError("Failed to load transaction for editing: " + e.message);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTransactionId(null);
-    setCart([]);
-    setJumlahBayar(0);
-  };
-
-  const handleUpdateTransaction = async () => {
-    if (cart.length === 0) {
-      setError("Cart kosong");
-      return;
-    }
-
-    const totalPrice = cart.reduce((sum, c) => sum + c.qty * c.harga_satuan, 0);
-    const paymentAmount = Number(jumlahBayar);
-
-    if (!paymentAmount || paymentAmount <= 0) {
-      setError("Jumlah bayar harus lebih dari 0");
-      return;
-    }
-
-    if (paymentAmount < totalPrice) {
-      setError(`Jumlah bayar kurang. Total: Rp ${totalPrice.toLocaleString()}`);
-      return;
-    }
-
-    try {
-      const payload = {
-        jumlah_bayar: paymentAmount,
-        items: cart.map((c) => ({
-          product_id: c.product_id,
-          qty: c.qty,
-          harga_satuan: c.harga_satuan,
-        })),
-      };
-
-      const res = await updateTransaction(editingTransactionId, payload);
-      alert("Update sukses!");
-
-      // Refresh list
-      loadData();
-
-      // Reset edit mode
-      handleCancelEdit();
-    } catch (e) {
-      setError(e.message);
-    }
-  };
 
   const handleSearch = async () => {
     if (!txSearch.trim()) {
@@ -347,9 +276,9 @@ export default function Transactions({ user }) {
             </div>
 
             {/* Cart Column */}
-            <div className="card" style={{ flex: "1 1 300px", height: "fit-content", padding: "var(--spacing-md)", border: editingTransactionId ? "2px solid var(--warning)" : undefined }}>
+            <div className="card" style={{ flex: "1 1 300px", height: "fit-content", padding: "var(--spacing-md)" }}>
               <h4 style={{ marginTop: 0 }}>
-                {editingTransactionId ? `Editing Transaction #${transactions.find(t => t.id === editingTransactionId)?.kode_transaksi}` : "Current Cart"}
+                Current Cart
               </h4>
               {cart.length === 0 ? (
                 <div style={{ color: "var(--secondary)", padding: "20px 0", textAlign: "center" }}>Cart is empty</div>
@@ -442,54 +371,21 @@ export default function Transactions({ user }) {
                       </div>
                     )}
 
-                    {editingTransactionId ? (
-                      <div style={{ display: "flex", gap: "10px" }}>
-                        <button
-                          onClick={handleUpdateTransaction}
-                          disabled={cart.length === 0 || change < 0}
-                          style={{
-                            flex: 1,
-                            padding: 12,
-                            backgroundColor: "var(--warning)",
-                            color: "black",
-                            border: "none",
-                            fontWeight: "bold",
-                            cursor: cart.length === 0 || change < 0 ? "not-allowed" : "pointer",
-                            opacity: cart.length === 0 || change < 0 ? 0.6 : 1,
-                          }}
-                        >
-                          Update Transaction
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          style={{
-                            padding: 12,
-                            backgroundColor: "#ef4444",
-                            color: "white",
-                            border: "none",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleCheckout}
-                        disabled={cart.length === 0 || change < 0}
-                        style={{
-                          width: "100%",
-                          padding: 12,
-                          backgroundColor: "var(--primary)",
-                          color: "white",
-                          border: "none",
-                          cursor: cart.length === 0 || change < 0 ? "not-allowed" : "pointer",
-                          opacity: cart.length === 0 || change < 0 ? 0.6 : 1,
-                        }}
-                      >
-                        Process Checkout
-                      </button>
-                    )}
+                    <button
+                      onClick={handleCheckout}
+                      disabled={cart.length === 0 || change < 0}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        backgroundColor: "var(--primary)",
+                        color: "white",
+                        border: "none",
+                        cursor: cart.length === 0 || change < 0 ? "not-allowed" : "pointer",
+                        opacity: cart.length === 0 || change < 0 ? 0.6 : 1,
+                      }}
+                    >
+                      Process Checkout
+                    </button>
                   </div>
                 </>
               )}
@@ -541,23 +437,6 @@ export default function Transactions({ user }) {
                   View Details
                 </button>
 
-                {canManageAllTransactions && (
-                  <button
-                    onClick={() => handleStartEdit(t)}
-                    style={{
-                      marginTop: 8,
-                      backgroundColor: "var(--warning)",
-                      color: "black",
-                      border: "none",
-                      padding: "6px",
-                      width: "100%",
-                      fontSize: "0.9rem",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Edit
-                  </button>
-                )}
               </div>
             ))}
           </div>
