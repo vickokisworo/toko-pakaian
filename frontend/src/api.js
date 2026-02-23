@@ -86,17 +86,17 @@ async function request(path, opts = {}) {
   }
 }
 
-export async function login(email, password) {
-  return request(`/auth/login`, {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-}
-
 export async function register(payload) {
   return request(`/auth/register`, {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function login(email, password) {
+  return request(`/auth/login`, {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
   });
 }
 
@@ -110,16 +110,6 @@ export async function logout() {
   } catch (e) { }
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("refreshToken");
-}
-
-export async function getMe() {
-  try {
-    const token = sessionStorage.getItem("accessToken");
-    if (!token) return null;
-    return request("/users/me", { method: "GET" });
-  } catch (e) {
-    return null;
-  }
 }
 
 export async function getProducts(params = {}) {
@@ -154,84 +144,6 @@ export async function getCategories() {
   return request(`/categories`, { method: "GET" });
 }
 
-export async function getCategoryDetail(id) {
-  return request(`/categories/${id}`, { method: "GET" });
-}
-
-export async function createCategory(payload) {
-  return request(`/categories`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateCategory(id, payload) {
-  return request(`/categories/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function deleteCategory(id) {
-  return request(`/categories/${id}`, { method: "DELETE" });
-}
-
-export async function getTransactions() {
-  return request(`/transactions`, { method: "GET" });
-}
-
-export async function getTransactionDetail(id) {
-  return request(`/transactions/${id}`, { method: "GET" });
-}
-
-export async function getTransactionByKode(kode) {
-  return request(`/transactions/kode/${kode}`, { method: "GET" });
-}
-
-export async function createTransaction(payload) {
-  return request(`/transactions`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateTransaction(id, payload) {
-  return request(`/transactions/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function getUsers() {
-  return request(`/users`, { method: "GET" });
-}
-
-export async function getUserDetail(id) {
-  return request(`/users/${id}`, { method: "GET" });
-}
-
-export async function createUser(payload) {
-  return request(`/users`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateUser(id, payload) {
-  return request(`/users/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function deleteUser(id) {
-  return request(`/users/${id}`, { method: "DELETE" });
-}
-
-export async function getSalesReport() {
-  return request(`/reports/sales`, { method: "GET" });
-}
-
 export default {
   login,
   register,
@@ -242,18 +154,4 @@ export default {
   updateProduct,
   deleteProduct,
   getCategories,
-  getCategoryDetail,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  getTransactions,
-  getTransactionDetail,
-  getTransactionByKode,
-  createTransaction,
-  updateTransaction,
-  getUsers,
-  getUserDetail,
-  createUser,
-  updateUser,
-  deleteUser,
 };

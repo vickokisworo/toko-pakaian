@@ -1,133 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Login from "./pages/Login";
-import Products from "./pages/Products";
-import Categories from "./pages/Categories";
-import Transactions from "./pages/Transactions";
-import Users from "./pages/Users";
-import Reports from "./pages/Reports";
 import { logout } from "./api";
-import Footer from "./components/Footer";
-import logo from "./assets/logo/1000222878-removebg-preview.png";
 
-
-// --- Internal Component: Trending Slider ---
-function TrendingSlider() {
-  const slides = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop",
-      title: "Summer Collection 2024",
-      subtitle: "Discover the hottest trends for the season.",
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop",
-      title: "Exclusive Accessories",
-      subtitle: "Complete your look with our premium selection.",
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=2071&auto=format&fit=crop",
-      title: "Urban Streetwear",
-      subtitle: "Style that speaks your personality.",
-    },
-    {
-      id: 4,
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop",
-      title: "Elegant Evening Wear",
-      subtitle: "Shine bright on your special nights.",
-    },
-    {
-      id: 5,
-      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=2070&auto=format&fit=crop",
-      title: "Casual Comfort",
-      subtitle: "Everyday essentials for everyone.",
-    },
-  ];
-
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
-    }, 4000); // Swipe every 4 seconds
-    return () => clearInterval(timer);
-  }, [slides.length]);
-
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url(${slide.image})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: index === current ? 1 : 0,
-            transition: "opacity 1s ease-in-out",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-            color: "white",
-            textAlign: "center",
-            padding: "20px",
-          }}
-        >
-          <h1 style={{ fontSize: "3.5rem", marginBottom: "1rem", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
-            {slide.title}
-          </h1>
-          <p style={{ fontSize: "1.5rem", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>{slide.subtitle}</p>
-        </div>
-      ))}
-
-      {/* Dots Indicator */}
-      <div style={{ position: "absolute", bottom: "30px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "10px" }}>
-        {slides.map((_, idx) => (
-          <div
-            key={idx}
-            onClick={() => setCurrent(idx)}
-            style={{
-              width: "12px",
-              height: "12px",
-              borderRadius: "50%",
-              backgroundColor: idx === current ? "white" : "rgba(255,255,255,0.5)",
-              cursor: "pointer",
-              transition: "background-color 0.3s",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Nav({ onRoute, onLogout, user, route }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  // Add scroll listener to make nav background solid when scrolling down
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+function Nav({ onRoute, onLogout, user }) {
   if (!user) return null;
-
-  const isDashboard = route === "#/";
-
-  const handleNavClick = (route) => {
-    onRoute(route);
-    setMenuOpen(false);
-  };
 
   return (
     <nav
@@ -137,76 +13,24 @@ function Nav({ onRoute, onLogout, user, route }) {
         left: 0,
         width: "100%",
         zIndex: 1000,
-        backgroundColor: isDashboard
-          ? (scrolled ? "rgba(0,0,0,0.8)" : "transparent")
-          : "rgba(0, 0, 0, 0.80)", // Semi-transparent black for other pages
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
         color: "white",
         padding: "5px 30px",
-        transition: "background-color 0.3s ease",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
       }}
     >
-      {/* Logo Left */}
-      <div style={{ fontSize: "1.5rem", fontWeight: "bold", zIndex: 1002, display: "flex", alignItems: "center", gap: "10px" }}>
-        <img src={logo} alt="Vicko Store" style={{ height: "75px", objectFit: "contain" }} />
+
+      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+        <button onClick={() => onRoute("#/")} className="nav-link-custom">Dashboard</button>
       </div>
 
-      {/* Mobile Toggle */}
-      <button
-        className="mobile-toggle"
-        onClick={() => setMenuOpen(!menuOpen)}
-        style={{
-          display: "none",
-          background: "transparent",
-          border: "none",
-          color: "white",
-          fontSize: "1.5rem",
-          zIndex: 1002,
-          cursor: "pointer"
-        }}
-      >
-        ☰
-      </button>
-
-      {/* Centered Navigation */}
-      <div
-        className={`nav-items ${menuOpen ? "open" : ""}`}
-        style={{
-          position: "absolute", // Center strictly
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: "30px",
-          alignItems: "center"
-        }}
-      >
-        <button onClick={() => handleNavClick("#/")} className="nav-link-custom">Dashboard</button>
-        <button onClick={() => handleNavClick("#/products")} className="nav-link-custom">Products</button>
-        <button onClick={() => handleNavClick("#/categories")} className="nav-link-custom">Categories</button>
-        {user?.role !== "pelanggan" && (
-          <button onClick={() => handleNavClick("#/transactions")} className="nav-link-custom">Transactions</button>
-        )}
-        {user?.role === "admin" && (
-          <button onClick={() => handleNavClick("#/reports")} className="nav-link-custom">Reports</button>
-        )}
-        {user?.role === "admin" && (
-          <button onClick={() => handleNavClick("#/users")} className="nav-link-custom">Users</button>
-        )}
-      </div>
-
-      {/* User / Logout Right */}
-      <div className={`nav-user ${menuOpen ? "open" : ""}`} style={{ zIndex: 1002, display: "flex", alignItems: "center", gap: "15px", marginRight: "50px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: "1.2" }}>
-          <span style={{ fontSize: "0.95rem", fontWeight: "bold", color: "white" }}>
-            {user.nama}
-          </span>
-          <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", textTransform: "capitalize" }}>
-            {user.role}
-          </span>
+          <span style={{ fontSize: "0.9rem", fontWeight: "bold" }}>{user.nama}</span>
+          <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.7)", textTransform: "capitalize" }}>{user.role}</span>
         </div>
-
         <button
           onClick={onLogout}
           style={{
@@ -216,7 +40,8 @@ function Nav({ onRoute, onLogout, user, route }) {
             border: "none",
             borderRadius: "20px",
             fontWeight: "bold",
-            fontSize: "0.85rem"
+            fontSize: "0.85rem",
+            cursor: "pointer"
           }}
         >
           Logout
@@ -232,11 +57,9 @@ function Nav({ onRoute, onLogout, user, route }) {
             font-weight: 500;
             padding: 5px 0;
             position: relative;
-            transition: color 0.3s;
+            cursor: pointer;
           }
-          .nav-link-custom:hover {
-             color: white;
-          }
+          .nav-link-custom:hover { color: white; }
           .nav-link-custom::after {
              content: '';
              position: absolute;
@@ -247,43 +70,9 @@ function Nav({ onRoute, onLogout, user, route }) {
              background-color: white;
              transition: width 0.3s;
           }
-          .nav-link-custom:hover::after {
-             width: 100%;
-          }
-
-          @media (max-width: 768px) {
-            .mobile-toggle { display: block !important; }
-            
-            /* Navbar items container becomes full screen overlay on mobile */
-            .nav-items {
-               display: none; /* hidden by default */
-               position: fixed !important;
-               top: 0;
-               left: 0;
-               width: 100%;
-               height: 100vh;
-               background-color: rgba(0,0,0,0.95);
-               flex-direction: column;
-               justify-content: center;
-               transform: none !important; /* Remove centering transform */
-               gap: 20px !important;
-               z-index: 1001;
-            }
-
-            /* Show items when open */
-            .nav-items.open {
-               display: flex !important;
-            }
-            
-            /* User section also moves into overlay or hides */
-            .nav-user {
-               display: none !important; /* Hide direct user section on mobile header */
-            }
-            
-            /* Maybe add user info inside the mobile menu if needed, simplified for now */
-          }
+          .nav-link-custom:hover::after { width: 100%; }
         `}</style>
-    </nav >
+    </nav>
   );
 }
 
@@ -293,8 +82,12 @@ export default function App() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error("Invalid user data in localStorage");
+      }
     }
 
     const onHash = () => setRoute(window.location.hash || "#/");
@@ -303,7 +96,7 @@ export default function App() {
   }, []);
 
   const handleRoute = (r) => {
-    window.location.hash = r.replace(/^#?/, "#");
+    window.location.hash = r;
   };
 
   const handleLogout = async () => {
@@ -321,68 +114,21 @@ export default function App() {
 
   if (route === "#/login" || !sessionStorage.getItem("accessToken")) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "var(--background)"
-      }}>
-        <div className="container" style={{ width: "100%", maxWidth: "450px" }}>
-          <Login
-            onLogin={(u) => {
-              setUser(u);
-              localStorage.setItem("user", JSON.stringify(u));
-              window.location.hash = "#/";
-            }}
-          />
-        </div>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "var(--background)" }}>
+        <Login
+          onLogin={(u) => {
+            setUser(u);
+            localStorage.setItem("user", JSON.stringify(u));
+            window.location.hash = "#/";
+          }}
+        />
       </div>
     );
   }
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Nav onRoute={handleRoute} onLogout={handleLogout} user={user} route={route} />
-
-      {/* Main Content Area */}
-      <main style={{ flex: 1, marginTop: route === "#/" ? 0 : "80px" }}> {/* Remove margin on Dashboard for fullscreen slider */}
-        {route === "#/" && (
-          <>
-            {/* Full Screen Trending Slider */}
-            <TrendingSlider />
-          </>
-        )}
-
-        {route !== "#/" && (
-          <div className="container">
-            {route === "#/products" && <Products />}
-            {route === "#/categories" && <Categories />}
-            {route === "#/transactions" && user?.role !== "pelanggan" && (
-              <Transactions user={user} />
-            )}
-            {route === "#/transactions" && user?.role === "pelanggan" && (
-              <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
-                Access Denied: Customers cannot access partial Transactions page.
-              </div>
-            )}
-            {route === "#/reports" && user?.role === "admin" && <Reports />}
-            {route === "#/reports" && user?.role !== "admin" && (
-              <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
-                Access Denied: Only Admin can access Reports page
-              </div>
-            )}
-            {route === "#/users" && user?.role === "admin" && <Users />}
-            {route === "#/users" && user?.role !== "admin" && (
-              <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
-                Access Denied: Only Admin can access Users page
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-
-      <Footer user={user} />
+      <Nav onRoute={handleRoute} onLogout={handleLogout} user={user} />
     </div>
   );
 }

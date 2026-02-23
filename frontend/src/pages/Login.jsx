@@ -103,42 +103,45 @@ export default function Login({ onLogin }) {
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "var(--primary)",
-              color: "white",
-              border: "none",
-              fontSize: "1rem"
-            }}
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "12px",
+            backgroundColor: "var(--primary)",
+            color: "white",
+            border: "none",
+            fontSize: "1rem",
+            cursor: "pointer",
+            borderRadius: "var(--radius-md)",
+            marginBottom: "10px"
+          }}
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
 
-          <div style={{ display: "flex", alignItems: "center", margin: "10px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
-            <span style={{ padding: "0 10px", color: "var(--secondary)", fontSize: "0.8rem" }}>OR</span>
-            <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowRegister(true)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "transparent",
-              color: "var(--primary)",
-              border: "1px solid var(--primary)",
-            }}
-          >
-            Create an Account
-          </button>
+        <div style={{ display: "flex", alignItems: "center", margin: "10px 0" }}>
+          <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
+          <span style={{ padding: "0 10px", color: "var(--secondary)", fontSize: "0.8rem" }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: "#e2e8f0" }}></div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowRegister(true)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "transparent",
+            color: "var(--primary)",
+            border: "1px solid var(--primary)",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer"
+          }}
+        >
+          Create an Account
+        </button>
       </form>
     </div>
   );
