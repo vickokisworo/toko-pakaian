@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     getProducts,
     createProduct,
     updateProduct,
     deleteProduct,
     getCategories,
+    getFavorite,
+    setFavorite,
 } from "../api";
+
+const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:3000";
 
 export default function Products() {
     const [items, setItems] = useState([]);
@@ -32,24 +36,40 @@ export default function Products() {
         kategori_id: "",
         deskripsi: "",
     });
+    const [file, setFile] = useState(null);
 
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedCategory, setSelectedCategory] = useState("all");
 
-    const [search, setSearch] = React.useState("");
+    // Favorite state
+    const [favoriteProductId, setFavoriteProductId] = useState(null);
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
+    const [toastVisible, setToastVisible] = useState(false);
+
+    const isAdmin = user?.role === "admin";
+    const isPelanggan = user?.role === "pelanggan";
 
     useEffect(() => {
         loadProducts();
         loadCategories();
-    }, []);
+    }, [selectedCategory]);
 
-    async function loadProducts(params = {}) {
+    useEffect(() => {
+        if (isPelanggan) {
+            loadFavorite();
+        }
+    }, [isPelanggan]);
+
+    async function loadProducts() {
         try {
-            if (!Object.keys(params).length) {
-                const hash = window.location.hash || "";
-                const qs = hash.includes("?") ? hash.split("?")[1] : "";
-                params = Object.fromEntries(new URLSearchParams(qs));
+            setLoading(true);
+            const params = {};
+            if (selectedCategory !== "all") {
+                params.kategori = selectedCategory;
             }
             const data = await getProducts(params);
+            // Artificial delay to show loading state
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             setItems(data || []);
             setError(null);
         } catch (e) {
@@ -68,6 +88,37 @@ export default function Products() {
         }
     }
 
+    async function loadFavorite() {
+        try {
+            const data = await getFavorite();
+            setFavoriteProductId(data?.favorite?.id ?? null);
+        } catch (e) {
+            // silently fail — column may not exist yet
+            console.warn("Could not load favorite:", e.message);
+        }
+    }
+
+    const handleToggleFavorite = async (e, productId) => {
+        e.stopPropagation();
+        if (favoriteLoading) return;
+        setFavoriteLoading(true);
+        try {
+            const newId = favoriteProductId === productId ? null : productId;
+            await setFavorite(newId);
+            setFavoriteProductId(newId);
+            if (newId !== null) {
+                setToastVisible(true);
+                setTimeout(() => {
+                    setToastVisible(false);
+                }, 4000);
+            }
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -77,7 +128,7 @@ export default function Products() {
             data.append("stok", formData.stok);
             data.append("kategori_id", formData.kategori_id);
             data.append("deskripsi", formData.deskripsi);
-
+            if (file) data.append("gambar", file);
 
             if (editingId) {
                 await updateProduct(editingId, data);
@@ -85,6 +136,7 @@ export default function Products() {
                 await createProduct(data);
             }
             setFormData({ nama_produk: "", harga: "", stok: "", kategori_id: "", deskripsi: "" });
+            setFile(null);
             setEditingId(null);
             setShowForm(false);
             loadProducts();
@@ -106,7 +158,7 @@ export default function Products() {
     };
 
     const handleDelete = async (id) => {
-        if (confirm("Hapus produk ini?")) {
+        if (confirm("Delete this product?")) {
             try {
                 await deleteProduct(id);
                 loadProducts();
@@ -121,103 +173,71 @@ export default function Products() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    if (loading) return <div>Loading products...</div>;
-
-    const isAdmin = user?.role === "admin";
-    const isPelanggan = user?.role === "pelanggan";
-
     return (
         <div>
-            <div>
-                <h3>Products</h3>
-
-                <div>
-                    <input
-                        placeholder="Search by id or name"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+            <div className="page-header">
+                <h1 className="page-title">
+                    Product List
+                </h1>
+                {isAdmin && (
                     <button
-                        onClick={() => loadProducts(search ? { search } : {})}
-                    >
-                        Search
-                    </button>
-                    <button
-                        onClick={() => {
-                            setSearch("");
-                            loadProducts({});
-                        }}
-                    >
-                        Clear
-                    </button>
-                </div>
-            </div>
-
-            {error && <div>{error}</div>}
-
-            {isAdmin && (
-                <div>
-                    <button
+                        className="btn-success"
+                        style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }}
                         onClick={() => {
                             setShowForm(true);
                             setEditingId(null);
-                            setFormData({
-                                nama_produk: "",
-                                harga: "",
-                                stok: "",
-                                kategori_id: "",
-                                deskripsi: "",
-                            });
+                            setFormData({ nama_produk: "", harga: "", stok: "", kategori_id: "", deskripsi: "" });
                         }}
                     >
-                        + Add New Product
+                        <i className="ph ph-plus"></i> Add Product
                     </button>
+                )}
+            </div>
 
-                    {showForm && (
-                        <div
-                            onClick={() => {
-                                setShowForm(false);
-                                setEditingId(null);
-                            }}
-                        >
-                            <div
-                                className="card"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <h4>{editingId ? "Edit Product" : "New Product"}</h4>
-                                <form onSubmit={handleSubmit}>
-                                    <div>
-                                        <label>Gambar Produk</label>
+            {error && <div style={{ color: "var(--danger)", marginBottom: "1rem" }}>{error}</div>}
 
-                                    </div>
-
-                                    <div>
-                                        <label>Nama Produk</label>
+            {
+                showForm && (
+                    <div className="modal-overlay" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                        <div className="modal-content" style={{ maxWidth: "550px" }} onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h4>{editingId ? "Edit Product" : "Add New Product"}</h4>
+                                <button className="modal-close" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                                    <i className="ph ph-x"></i>
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="modal-body">
+                                    <div className="input-group">
+                                        <label>Product Name</label>
                                         <input
                                             type="text"
                                             name="nama_produk"
+                                            placeholder="Enter product name..."
                                             value={formData.nama_produk}
                                             onChange={handleChange}
                                             required
                                         />
                                     </div>
 
-                                    <div>
-                                        <div>
-                                            <label>Harga</label>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                        <div className="input-group">
+                                            <label>Price (Rp)</label>
                                             <input
                                                 type="number"
                                                 name="harga"
+                                                placeholder="Example: 50000"
                                                 value={formData.harga}
                                                 onChange={handleChange}
                                                 required
                                             />
                                         </div>
-                                        <div>
-                                            <label>Stok</label>
+                                        <div className="input-group">
+                                            <label>Stock</label>
                                             <input
                                                 type="number"
                                                 name="stok"
+                                                placeholder="0"
                                                 value={formData.stok}
                                                 onChange={handleChange}
                                                 required
@@ -225,15 +245,15 @@ export default function Products() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label>Kategori</label>
+                                    <div className="input-group">
+                                        <label>Category</label>
                                         <select
                                             name="kategori_id"
                                             value={formData.kategori_id}
                                             onChange={handleChange}
                                             required
                                         >
-                                            <option value="">Pilih Kategori</option>
+                                            <option value="">Select Category</option>
                                             {categories.map((c) => (
                                                 <option key={c.id} value={c.id}>
                                                     {c.nama_kategori}
@@ -242,154 +262,255 @@ export default function Products() {
                                         </select>
                                     </div>
 
-                                    <div>
-                                        <label>Deskripsi</label>
+                                    <div className="input-group">
+                                        <label>Description</label>
                                         <textarea
                                             name="deskripsi"
+                                            placeholder="Write product description here..."
                                             value={formData.deskripsi}
                                             onChange={handleChange}
-                                            rows="4"
-                                           
+                                            rows="3"
                                         />
                                     </div>
 
-                                    <div>
-                                        <button type="submit">
-                                            {editingId ? "Update" : "Create"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowForm(false);
-                                                setEditingId(null);
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
+                                    <div className="input-group">
+                                        <label>Product Image</label>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => setFile(e.target.files[0])}
+                                                style={{ padding: "0.4rem" }}
+                                            />
+                                            {file && <span style={{ fontSize: "0.8rem", color: "var(--secondary)" }}>Ready to upload</span>}
+                                        </div>
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-outline" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-success">
+                                        {editingId ? "Save Changes" : "Add Product"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            <div className="product-main-layout">
+                <div className="category-bar-container">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+                            <nav className="category-nav">
+                                <div
+                                    className={`category-nav-item ${selectedCategory === "all" ? "active" : ""}`}
+                                    onClick={() => setSelectedCategory("all")}
+                                >
+                                    <span>All Categories</span>
+                                    <span className="badge">{items.length}</span>
+                                </div>
+
+                                {categories.map((c) => (
+                                    <div
+                                        key={c.id}
+                                        className={`category-nav-item ${selectedCategory === c.id ? "active" : ""}`}
+                                        onClick={() => setSelectedCategory(c.id)}
+                                    >
+                                        <span>{c.nama_kategori}</span>
+                                    </div>
+                                ))}
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="product-content">
+                    {loading ? (
+                        <div className="loading-screen" style={{ minHeight: "300px" }}>
+                            <div className="spinner"></div>
+                            <p className="loading-text">Preparing Best Collection...</p>
+                        </div>
+                    ) : items.length === 0 ? (
+                        <div className="card" style={{ textAlign: "center", padding: "4rem 2rem" }}>
+                            <i className="ph ph-package" style={{ fontSize: "4rem", color: "var(--border-strong)", marginBottom: "1rem" }}></i>
+                            <h3 style={{ color: "var(--text-muted)" }}>Product Not Found</h3>
+                            <p>Try using different keywords or select a different category.</p>
+                        </div>
+                    ) : (
+                        <div className="product-grid">
+                            {items.map((p) => {
+                                const isFav = favoriteProductId === p.id;
+                                return (
+                                    <div
+                                        key={p.id}
+                                        className={`product-card${isFav ? " product-card--favorite" : ""}`}
+                                    >
+                                        <div className="product-image-ctr" onClick={() => setSelectedProduct(p)}>
+                                            {p.gambar ? (
+                                                <img src={`${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
+                                            ) : (
+                                                <div className="product-placeholder">
+                                                    <i className="ph ph-image"></i>
+                                                </div>
+                                            )}
+                                            <div className="product-overlay">
+                                                <span>View Details</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="product-info">
+                                            <div onClick={() => setSelectedProduct(p)} style={{ cursor: "pointer" }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.35rem", height: "3rem" }}>
+                                                    <div className="product-title" style={{ flex: 1, whiteSpace: "normal", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: "0.95rem" }}>
+                                                        {p.nama_produk} {p.stok === 0 && <span style={{ color: "var(--danger)", fontSize: "0.75rem" }}> (Sold Out)</span>}
+                                                    </div>
+                                                    {isPelanggan && (
+                                                        <button
+                                                            className={`btn-favorite btn-favorite--inline${isFav ? " active" : ""}`}
+                                                            onClick={(e) => handleToggleFavorite(e, p.id)}
+                                                            disabled={favoriteLoading}
+                                                            title={isFav ? "Remove from favorite" : "Add to favorite"}
+                                                        >
+                                                            <i className={isFav ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="product-price" style={{ fontSize: "1.1rem", margin: "0.25rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <span>Rp {p.harga?.toLocaleString('id-ID') || 0}</span>
+                                                    <span style={{
+                                                        fontSize: "0.68rem",
+                                                        color: "var(--text-muted)",
+                                                        fontWeight: "600",
+                                                        fontFamily: "var(--font-main, sans-serif)"
+                                                    }}>
+                                                        {p.total_terjual || 0} sold
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="product-meta" style={{ marginTop: "auto" }}>
+                                                <span style={{ fontSize: "0.75rem", fontWeight: "500", color: "var(--text-muted)" }}>{p.nama_kategori}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
-            )}
+            </div>
 
-            {items.length === 0 ? (
-                <div>No products found.</div>
-            ) : (
-                <div>
-                    {items.map((p) => (
-                        <div
-                            key={p.id}
-                            className="card"
-                            onClick={() => setSelectedProduct(p)}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = "translateY(-5px)";
-                                e.currentTarget.style.boxShadow = "var(--shadow-lg)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = "none";
-                                e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                            }}
-                        >
-
-                            <div>
-                                <strong>{p.nama_produk}</strong>
-                                <div>Rp {p.harga?.toLocaleString() || 0}</div>
-
-                                <div>
-                                    <span>{p.nama_kategori}</span>
-                                    {!isPelanggan && <span>Stok: {p.stok}</span>}
-                                </div>
-
-                                {isAdmin && (
-                                    <div>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEdit(p);
-                                            }}
-                                         
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDelete(p.id);
-                                            }}
-                                      
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
+            {
+                selectedProduct && (
+                    <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
+                        <div className="modal-content" style={{ maxWidth: "650px" }} onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h4>Product Detail</h4>
+                                <button className="modal-close" onClick={() => setSelectedProduct(null)}>
+                                    <i className="ph ph-x"></i>
+                                </button>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {selectedProduct && (
-                <div
-                    onClick={() => setSelectedProduct(null)}
-                >
-                    <div
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div>
-                            <h2>Detail Produk</h2>
-                            <button
-                                onClick={() => setSelectedProduct(null)}
-                            >
-                                &times;
-                            </button>
-                        </div>
-
-                        <div>
-
-
-                            <div>
-                                <h3>{selectedProduct.nama_produk}</h3>
-
-                                <div>
-                                    Rp {selectedProduct.harga?.toLocaleString() || 0}
-                                </div>
-
-                                <div>
-                                    <span>
-                                        Kategori: {selectedProduct.nama_kategori}
-                                    </span>
-                                    <span>
-                                        Stok: {selectedProduct.stok}
-                                    </span>
-                                </div>
-
-                                <div>
-                                    <h4>Deskripsi</h4>
-                                    <p>
-                                        {selectedProduct.deskripsi || "Tidak ada deskripsi untuk produk ini."}
-                                    </p>
-                                </div>
-
-                                {isAdmin && (
-                                    <div>
-                                        <button
-                                            onClick={() => {
-                                                handleEdit(selectedProduct);
-                                                setSelectedProduct(null);
-                                            }}
-                                 
-                                        >
-                                            Edit Produk
-                                        </button>
+                            <div className="modal-body">
+                                <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "1.5rem" }}>
+                                    <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", height: "250px", background: "#f3f4f6" }}>
+                                        {selectedProduct.gambar ? (
+                                            <img src={`${API_BASE}/uploads/${selectedProduct.gambar}`} alt={selectedProduct.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        ) : (
+                                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem", color: "#cbd5e1" }}>
+                                                <i className="ph ph-image"></i>
+                                            </div>
+                                        )}
                                     </div>
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <h3 style={{ marginBottom: "0.25rem", fontSize: "1.4rem", fontWeight: "800" }}>{selectedProduct.nama_produk}</h3>
+                                        <div style={{ fontFamily: "'Roboto', sans-serif", color: "var(--primary)", fontSize: "1.5rem", fontWeight: "900", marginBottom: "1rem" }}>
+                                            Rp {selectedProduct.harga?.toLocaleString('id-ID')}
+                                        </div>
+
+                                        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                                            <span className="badge badge-kasir">{selectedProduct.nama_kategori}</span>
+                                            <span className={`stok-badge ${selectedProduct.stok === 0 ? 'stok-empty' : ''}`} style={{ fontSize: "0.8rem" }}>
+                                                Stock: {selectedProduct.stok}
+                                            </span>
+                                        </div>
+
+                                        <h5 style={{ color: "var(--text-main)", marginBottom: "0.4rem", fontSize: "0.95rem" }}>Product Description</h5>
+                                        <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6", margin: 0 }}>
+                                            {selectedProduct.deskripsi || "No description available for this product."}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn-outline" onClick={() => setSelectedProduct(null)}>Close</button>
+                                {isPelanggan && (
+                                    <button
+                                        className={`btn-favorite-modal${favoriteProductId === selectedProduct.id ? " active" : ""}`}
+                                        onClick={(e) => { handleToggleFavorite(e, selectedProduct.id); }}
+                                        disabled={favoriteLoading}
+                                        title={favoriteProductId === selectedProduct.id ? "Remove Favorite" : "Add to Favorite"}
+                                    >
+                                        <i className={favoriteProductId === selectedProduct.id ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                    </button>
+                                )}
+                                {isAdmin && (
+                                    <>
+                                        <button className="btn-danger" onClick={() => { handleDelete(selectedProduct.id); setSelectedProduct(null); }}>
+                                            Delete Product
+                                        </button>
+                                        <button onClick={() => { handleEdit(selectedProduct); setSelectedProduct(null); }}>
+                                            Edit Product
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
                     </div>
+                )
+            }
+
+            {toastVisible && (
+                <div style={{
+                    position: "fixed",
+                    bottom: "2rem",
+                    right: "2rem",
+                    backgroundColor: "#1a1a1a",
+                    color: "#ffffff",
+                    padding: "1rem 1.5rem",
+                    borderRadius: "var(--radius-lg)",
+                    boxShadow: "var(--shadow-lg)",
+                    border: "1px solid #333333",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1.5rem",
+                    zIndex: 9999,
+                    animation: "slideUp 0.3s ease",
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <i className="ph-bold ph-check" style={{ color: "#ffffff", fontSize: "1.3rem" }}></i>
+                        <span style={{ fontWeight: "500", fontSize: "0.95rem" }}>Berhasil ditambahkan ke Favorite</span>
+                    </div>
+                    <a href="#/favorite" style={{ 
+                        padding: "0.4rem 0.8rem", 
+                        fontSize: "0.85rem",
+                        textDecoration: "none",
+                        fontWeight: "600",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "var(--radius-md)",
+                        backgroundColor: "transparent",
+                        transition: "all 0.2s"
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#333333"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                    >
+                        Lihat
+                    </a>
                 </div>
             )}
-        </div>
+        </div >
     );
 }

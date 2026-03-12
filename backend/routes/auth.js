@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const authenticateToken = require("../middleware/authenticate");
 
 /**
  * @swagger
@@ -239,6 +240,85 @@ router.post("/logout", async (req, res) => {
       refreshToken,
     ]);
     res.json({ message: "Logout berhasil" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/me/favorite:
+ *   get:
+ *     summary: Mendapatkan produk favorit milik user yang sedang login
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Data produk favorit (null jika belum diset)
+ *       401:
+ *         description: Token tidak valid
+ */
+router.get("/me/favorite", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT u.favorite,
+              p.id, p.nama_produk, p.harga, p.stok, p.deskripsi, p.gambar,
+              c.nama_kategori
+       FROM users u
+       LEFT JOIN products p ON p.id = u.favorite
+       LEFT JOIN categories c ON c.id = p.kategori_id
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "User tidak ditemukan" });
+    const row = result.rows[0];
+    if (!row.favorite) return res.json({ favorite: null });
+    const { favorite, ...product } = row;
+    res.json({ favorite: product });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/me/favorite:
+ *   put:
+ *     summary: Set atau hapus produk favorit user yang sedang login
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               product_id:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 3
+ *     responses:
+ *       200:
+ *         description: Favorit berhasil diupdate
+ *       404:
+ *         description: Produk tidak ditemukan
+ */
+router.put("/me/favorite", authenticateToken, async (req, res) => {
+  const { product_id } = req.body;
+  try {
+    // If setting a product, verify it exists
+    if (product_id !== null && product_id !== undefined) {
+      const check = await pool.query("SELECT id FROM products WHERE id=$1", [product_id]);
+      if (!check.rows.length) return res.status(404).json({ error: "Produk tidak ditemukan" });
+    }
+    await pool.query(
+      "UPDATE users SET favorite=$1 WHERE id=$2",
+      [product_id || null, req.user.id]
+    );
+    res.json({ message: product_id ? "Produk ditambahkan ke favorit" : "Favorit dihapus", product_id: product_id || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -3,7 +3,14 @@ const router = express.Router();
 const pool = require("../config/db");
 const authenticateToken = require("../middleware/authenticate");
 const authorizeRoles = require("../middleware/authorization");
-const upload = require("../middleware/upload");
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
@@ -35,7 +42,8 @@ router.get(
       const { kategori, search } = req.query;
       let params = [];
       let where = [];
-      let base = `SELECT p.*, c.nama_kategori 
+      let base = `SELECT p.*, c.nama_kategori,
+          (SELECT COALESCE(SUM(qty), 0) FROM transaction_items WHERE product_id = p.id) as total_terjual
          FROM products p 
          LEFT JOIN categories c ON p.kategori_id = c.id`;
 
@@ -94,7 +102,8 @@ router.get(
     try {
       const { id } = req.params;
       const result = await pool.query(
-        `SELECT p.*, c.nama_kategori 
+        `SELECT p.*, c.nama_kategori,
+            (SELECT COALESCE(SUM(qty), 0) FROM transaction_items WHERE product_id = p.id) as total_terjual
          FROM products p 
          LEFT JOIN categories c ON p.kategori_id = c.id 
          WHERE p.id = $1`,
@@ -149,16 +158,16 @@ router.post(
   "/",
   authenticateToken,
   authorizeRoles("admin"),
-  upload.single("image"),
+  upload.single("gambar"),
   async (req, res) => {
     try {
       const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
-      const image = req.file ? `/uploads/products/${req.file.filename}` : null;
+      const gambar = req.file ? req.file.filename : null;
 
       const newProduct = await pool.query(
-        `INSERT INTO products (nama_produk, harga, stok, kategori_id, image, deskripsi) 
+        `INSERT INTO products (nama_produk, harga, stok, kategori_id, deskripsi, gambar) 
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [nama_produk, harga, stok, kategori_id, image, deskripsi],
+        [nama_produk, harga, stok, kategori_id, deskripsi, gambar],
       );
       res.status(201).json(newProduct.rows[0]);
     } catch (err) {
@@ -206,34 +215,29 @@ router.put(
   "/:id",
   authenticateToken,
   authorizeRoles("admin"),
-  upload.single("image"),
+  upload.single("gambar"),
   async (req, res) => {
     try {
       const { id } = req.params;
       const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
-      const image = req.file ? `/uploads/products/${req.file.filename}` : null;
+      const gambar = req.file ? req.file.filename : undefined;
 
-      let query, params;
-      if (image) {
-        query = `UPDATE products 
-         SET nama_produk=COALESCE($1, nama_produk), 
-             harga=COALESCE($2, harga), 
-             stok=COALESCE($3, stok), 
-             kategori_id=COALESCE($4, kategori_id), 
-             image=COALESCE($5, image),
-             deskripsi=COALESCE($6, deskripsi)
-         WHERE id=$7 RETURNING *`;
-        params = [nama_produk, harga, stok, kategori_id, image, deskripsi, id];
-      } else {
-        query = `UPDATE products 
+      let query = `UPDATE products 
          SET nama_produk=COALESCE($1, nama_produk), 
              harga=COALESCE($2, harga), 
              stok=COALESCE($3, stok), 
              kategori_id=COALESCE($4, kategori_id),
-             deskripsi=COALESCE($5, deskripsi)
-         WHERE id=$6 RETURNING *`;
-        params = [nama_produk, harga, stok, kategori_id, deskripsi, id];
+             deskripsi=COALESCE($5, deskripsi)`;
+
+      let params = [nama_produk, harga, stok, kategori_id, deskripsi];
+
+      if (gambar !== undefined) {
+        params.push(gambar);
+        query += `, gambar=$${params.length}`;
       }
+
+      params.push(id);
+      query += ` WHERE id=$${params.length} RETURNING *`;
 
       const updated = await pool.query(query, params);
 

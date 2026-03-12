@@ -15,9 +15,15 @@ app.use("/uploads", express.static("uploads")); // Serve uploaded files
 
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
+const categoryRoutes = require("./routes/categories");
+const userRoutes = require("./routes/users");
+const transactionRoutes = require("./routes/transactions");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 const swaggerDocs = require("./swagger");
 swaggerDocs(app);

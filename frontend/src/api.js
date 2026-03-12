@@ -144,6 +144,83 @@ export async function getCategories() {
   return request(`/categories`, { method: "GET" });
 }
 
+export async function createCategory(payload) {
+  return request(`/categories`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCategory(id, payload) {
+  return request(`/categories/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCategory(id) {
+  return request(`/categories/${id}`, { method: "DELETE" });
+}
+
+export async function getUsers() {
+  return request(`/users`, { method: "GET" });
+}
+
+export async function createUser(payload) {
+  return request(`/users`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateUser(id, payload) {
+  return request(`/users/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteUser(id) {
+  return request(`/users/${id}`, { method: "DELETE" });
+}
+
+export async function getTransactions() {
+  return request(`/transactions`, { method: "GET" });
+}
+
+export async function getTransactionDetail(id) {
+  return request(`/transactions/${id}`, { method: "GET" });
+}
+
+export async function createTransaction(payload) {
+  return request(`/transactions`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateTransaction(id, payload) {
+  return request(`/transactions/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTransaction(id) {
+  return request(`/transactions/${id}`, { method: "DELETE" });
+}
+
+export async function getFavorite() {
+  return request(`/auth/me/favorite`, { method: "GET" });
+}
+
+export async function setFavorite(productId) {
+  return request(`/auth/me/favorite`, {
+    method: "PUT",
+    body: JSON.stringify({ product_id: productId }),
+  });
+}
+
 export default {
   login,
   register,
@@ -154,4 +231,18 @@ export default {
   updateProduct,
   deleteProduct,
   getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  getTransactions,
+  getTransactionDetail,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  getFavorite,
+  setFavorite,
 };

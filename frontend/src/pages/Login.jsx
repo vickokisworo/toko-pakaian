@@ -16,7 +16,7 @@ export default function Login({ onLogin }) {
     setError("");
 
     if (!email.trim() || !password) {
-      setError("Email dan password harus diisi");
+      setError("Email and password are required");
       return;
     }
 
@@ -28,7 +28,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem("user", JSON.stringify(res.user));
       onLogin(res.user);
     } catch (err) {
-      setError(err.message || "Login gagal");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -59,62 +59,78 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div>
-      <h2>Login</h2>
-      <p>
-        Welcome back! Please sign in to continue.
-      </p>
-
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, passwordRef)}
-            placeholder="example@email.com"
-          />
+    <div className="auth-wrapper">
+      <div className="auth-card glass-panel">
+        <div className="auth-header">
+          <div className="header-logo" style={{ marginBottom: "0.5rem" }}>STYLA</div>
         </div>
 
-        <div>
-          <label>Password</label>
-          <input
-            ref={passwordRef}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, null)}
-            placeholder="••••••••"
-          />
-        </div>
-
-        {error && (
-          <div>
-            {error}
+        <form onSubmit={handleLogin}>
+          <div className="input-group">
+            <label>Email Address</label>
+            <div style={{ position: "relative" }}>
+              <i className="ph ph-envelope" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, passwordRef)}
+                placeholder="example@email.com"
+                style={{ paddingLeft: "36px" }}
+              />
+            </div>
           </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
+          <div className="input-group">
+            <label>Password</label>
+            <div style={{ position: "relative" }}>
+              <i className="ph ph-lock-key" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
+              <input
+                ref={passwordRef}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, null)}
+                placeholder="••••••••"
+                style={{ paddingLeft: "36px" }}
+              />
+            </div>
+          </div>
 
-        <div>
-          <div></div>
-          <span>OR</span>
-          <div></div>
-        </div>
+          {error && (
+            <div style={{ color: "var(--danger)", backgroundColor: "#fee2e2", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <i className="ph-fill ph-warning-circle"></i> {error}
+            </div>
+          )}
 
-        <button
-          type="button"
-          onClick={() => setShowRegister(true)}
-        >
-          Create an Account
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", marginTop: "0.5rem" }}
+          >
+            {loading ? (
+              <><i className="ph ph-spinner-gap" style={{ animation: "spin 1s linear infinite" }}></i> Signing in...</>
+            ) : (
+              <><i className="ph-bold ph-sign-in"></i> Sign In</>
+            )}
+          </button>
+
+          <div className="auth-divider">OR</div>
+
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => setShowRegister(true)}
+            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem" }}
+          >
+            Create an Account
+          </button>
+        </form>
+      </div>
+
+      <style>{`
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
