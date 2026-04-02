@@ -311,7 +311,7 @@ router.post("/me/wishlist", authenticateToken, async (req, res) => {
       "INSERT INTO user_wishlists (user_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
       [req.user.id, product_id]
     );
-    res.json({ message: "Produk ditambahkan ke favorit", product_id });
+    res.json({ message: "Produk ditambahkan ke Wishlist", product_id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -333,7 +333,7 @@ router.post("/me/wishlist", authenticateToken, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: Favorit berhasil dihapus
+ *         description: Wishlist berhasil dihapus
  *       500:
  *         description: Kesalahan server
  */
@@ -344,7 +344,7 @@ router.delete("/me/wishlist/:id", authenticateToken, async (req, res) => {
       "DELETE FROM user_wishlists WHERE user_id=$1 AND product_id=$2",
       [req.user.id, product_id]
     );
-    res.json({ message: "Favorit dihapus", product_id });
+    res.json({ message: "Wishlist dihapus", product_id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

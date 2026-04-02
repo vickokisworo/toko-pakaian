@@ -16,7 +16,15 @@ const pool = new Pool(
       }
 );
 
-// Auto migrate tabel favorite menjadi wishlist jika belum dirubah
-pool.query('ALTER TABLE IF EXISTS user_favorites RENAME TO user_wishlists;').catch(err => console.log("Migrasi wishlist opsional dilewati"));
+// Sinkronisasi tabel: Pastikan tabel user_wishlists tersedia
+pool.query('ALTER TABLE IF EXISTS user_favorites RENAME TO user_wishlists;').catch(() => {});
+pool.query(`
+  CREATE TABLE IF NOT EXISTS user_wishlists (
+    user_id integer NOT NULL,
+    product_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, product_id)
+  );
+`).catch(() => {});
 
 module.exports = pool;
