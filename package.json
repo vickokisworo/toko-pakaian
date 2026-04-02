@@ -1,0 +1,13 @@
+{
+  "name": "bridge-api",
+  "version": "1.0.0",
+  "description": "Bridge for Railway to Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd backend && npm install && node index.js",
+    "build": "cd backend && npm install"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
