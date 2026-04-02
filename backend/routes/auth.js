@@ -5,6 +5,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("../middleware/authenticate");
 
+router.get("/test-auth", (req, res) => res.json({ message: "auth-router-connected" }));
+
 /**
  * @swagger
  * tags:

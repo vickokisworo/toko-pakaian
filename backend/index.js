@@ -1,7 +1,5 @@
 const express = require("express");
 const app = express();
-app.get("/api/ping", (req, res) => res.json({ message: "api-ping", version: "v6" }));
-app.get("/ping", (req, res) => res.json({ message: "root-ping", version: "v6" }));
 require("dotenv").config();
 const cors = require("cors");
 
@@ -18,7 +16,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve uploaded files
-app.get("/api/ping", (req, res) => res.json({ message: "pong", status: "wishlist-ready-v3" }));
+app.get("/ping", (req, res) => res.json({ status: "ok", message: "pong", version: "v7-clean" }));
 
 
 const authRoutes = require("./routes/auth");
