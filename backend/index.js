@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const path = require("path");
 require("dotenv").config();
 const cors = require("cors");
 
@@ -15,7 +16,7 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use("/uploads", express.static("uploads")); // Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
 app.get("/ping", (req, res) => res.json({ status: "ok", message: "pong", version: "v7-clean" }));
 
 
