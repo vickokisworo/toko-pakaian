@@ -249,7 +249,7 @@ router.post("/logout", async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/me/wishlist:
+ * /api/auth/me/favorite:
  *   get:
  *     summary: Mendapatkan produk favorit milik user yang sedang login
  *     tags: [Auth]
@@ -261,17 +261,17 @@ router.post("/logout", async (req, res) => {
  *       401:
  *         description: Token tidak valid
  */
-router.get("/me/wishlist", authenticateToken, async (req, res) => {
+router.get("/me/favorite", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT uf.product_id as wishlist_id, p.*, c.nama_kategori
-       FROM user_wishlists uf
+      `SELECT uf.product_id as favorite_id, p.*, c.nama_kategori
+       FROM user_favorites uf
        JOIN products p ON p.id = uf.product_id
        LEFT JOIN categories c ON c.id = p.kategori_id
        WHERE uf.user_id = $1`,
       [req.user.id]
     );
-    res.json({ wishlists: result.rows });
+    res.json({ favorites: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -279,7 +279,7 @@ router.get("/me/wishlist", authenticateToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/me/wishlist:
+ * /api/auth/me/favorite:
  *   put:
  *     summary: Set atau hapus produk favorit user yang sedang login
  *     tags: [Auth]
@@ -302,7 +302,7 @@ router.get("/me/wishlist", authenticateToken, async (req, res) => {
  *       404:
  *         description: Produk tidak ditemukan
  */
-router.post("/me/wishlist", authenticateToken, async (req, res) => {
+router.post("/me/favorite", authenticateToken, async (req, res) => {
   const { product_id } = req.body;
   if (!product_id) return res.status(400).json({ error: "product_id is required" });
   try {
@@ -310,10 +310,10 @@ router.post("/me/wishlist", authenticateToken, async (req, res) => {
     if (!check.rows.length) return res.status(404).json({ error: "Produk tidak ditemukan" });
 
     await pool.query(
-      "INSERT INTO user_wishlists (user_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      "INSERT INTO user_favorites (user_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
       [req.user.id, product_id]
     );
-    res.json({ message: "Produk ditambahkan ke Wishlist", product_id });
+    res.json({ message: "Produk ditambahkan ke Favorit", product_id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -321,7 +321,7 @@ router.post("/me/wishlist", authenticateToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/me/wishlist/{id}:
+ * /api/auth/me/favorite/{id}:
  *   delete:
  *     summary: Menghapus produk dari daftar favorit user
  *     tags: [Auth]
@@ -335,18 +335,18 @@ router.post("/me/wishlist", authenticateToken, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: Wishlist berhasil dihapus
+ *         description: Favorit berhasil dihapus
  *       500:
  *         description: Kesalahan server
  */
-router.delete("/me/wishlist/:id", authenticateToken, async (req, res) => {
+router.delete("/me/favorite/:id", authenticateToken, async (req, res) => {
   const product_id = req.params.id;
   try {
     await pool.query(
-      "DELETE FROM user_wishlists WHERE user_id=$1 AND product_id=$2",
+      "DELETE FROM user_favorites WHERE user_id=$1 AND product_id=$2",
       [req.user.id, product_id]
     );
-    res.json({ message: "Wishlist dihapus", product_id });
+    res.json({ message: "Favorit dihapus", product_id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

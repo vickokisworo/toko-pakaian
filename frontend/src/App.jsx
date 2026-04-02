@@ -6,7 +6,7 @@ import Category from "./pages/Category";
 import User from "./pages/User";
 import Transaction from "./pages/Transaction";
 import Search from "./pages/Search";
-import Wishlist from "./pages/Wishlist";
+import Favorite from "./pages/Favorite";
 
 function AppShell({ onRoute, onLogout, user, currentRoute, children }) {
   if (!user) return null;
@@ -144,9 +144,9 @@ function AppShell({ onRoute, onLogout, user, currentRoute, children }) {
               
               {user.role === "pelanggan" && (
                 <a
-                  href="#/wishlist"
-                  title="My Wishlist"
-                  className={`wishlist-nav-item desktop-wishlist ${currentRoute === "#/wishlist" ? "active" : ""}`}
+                  href="#/favorite"
+                  title="My Favorite"
+                  className={`favorite-nav-item desktop-favorite ${currentRoute === "#/favorite" ? "active" : ""}`}
                 >
                   <i className="ph ph-heart" style={{ fontSize: "1.6rem" }}></i>
                 </a>
@@ -190,9 +190,9 @@ function AppShell({ onRoute, onLogout, user, currentRoute, children }) {
             )}
 
             {user.role === "pelanggan" && (
-              <a href="#/wishlist" className={`top-nav-item mobile-wishlist ${currentRoute === "#/wishlist" ? "active" : ""}`}>
+              <a href="#/favorite" className={`top-nav-item mobile-favorite ${currentRoute === "#/favorite" ? "active" : ""}`}>
                 <i className="ph ph-heart"></i>
-                <span>WISHLIST</span>
+                <span>FAVORITE</span>
               </a>
             )}
           </nav>
@@ -329,7 +329,7 @@ export default function App() {
   else if (route === "#/user") pageContent = <div className="roboto-content"><User user={user} /></div>;
   else if (route === "#/transaction") pageContent = <div className="roboto-content"><Transaction user={user} /></div>;
   else if (route.startsWith("#/search")) pageContent = <div className="roboto-content"><Search user={user} /></div>;
-  else if (route === "#/wishlist") pageContent = <div className="roboto-content"><Wishlist user={user} /></div>;
+  else if (route === "#/favorite") pageContent = <div className="roboto-content"><Favorite user={user} /></div>;
 
   return (
     <AppShell onRoute={handleRoute} onLogout={handleLogout} user={user} currentRoute={route}>

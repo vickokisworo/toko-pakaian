@@ -215,19 +215,19 @@ export async function deleteTransaction(id) {
   return request(`/transactions/${id}`, { method: "DELETE" });
 }
 
-export async function getWishlist() {
-  return request(`/auth/me/wishlist`, { method: "GET" });
+export async function getFavorite() {
+  return request(`/auth/me/favorite`, { method: "GET" });
 }
 
-export async function addWishlist(productId) {
-  return request(`/auth/me/wishlist`, {
+export async function addFavorite(productId) {
+  return request(`/auth/me/favorite`, {
     method: "POST",
     body: JSON.stringify({ product_id: productId }),
   });
 }
 
-export async function removeWishlist(productId) {
-  return request(`/auth/me/wishlist/${productId}`, {
+export async function removeFavorite(productId) {
+  return request(`/auth/me/favorite/${productId}`, {
     method: "DELETE",
   });
 }
@@ -254,7 +254,7 @@ export default {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  getWishlist,
-  addWishlist,
-  removeWishlist,
+  getFavorite,
+  addFavorite,
+  removeFavorite,
 };

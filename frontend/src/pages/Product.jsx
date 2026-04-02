@@ -5,9 +5,9 @@ import {
     updateProduct,
     deleteProduct,
     getCategories,
-    getWishlist,
-    addWishlist,
-    removeWishlist,
+    getFavorite,
+    addFavorite,
+    removeFavorite,
 } from "../api";
 
 const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:3000";
@@ -42,9 +42,9 @@ export default function Products() {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState("all");
 
-    // Wishlist state
-    const [wishlistProductIds, setWishlistProductIds] = useState([]);
-    const [wishlistLoading, setWishlistLoading] = useState(false);
+    // Favorite state
+    const [favoriteProductIds, setFavoriteProductIds] = useState([]);
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState("");
 
@@ -58,7 +58,7 @@ export default function Products() {
 
     useEffect(() => {
         if (isPelanggan) {
-            loadWishlist();
+            loadFavorite();
         }
     }, [isPelanggan]);
 
@@ -90,32 +90,31 @@ export default function Products() {
         }
     }
 
-    async function loadWishlist() {
+    async function loadFavorite() {
         try {
-            const data = await getWishlist();
-            const wishlists = data?.wishlists || [];
-            setWishlistProductIds(wishlists.map(f => f.id));
+            const data = await getFavorite();
+            const favorites = data?.favorites || [];
+            setFavoriteProductIds(favorites.map(f => f.id));
         } catch (e) {
-            // silently fail — column may not exist yet
-            console.warn("Could not load wishlist:", e.message);
+            console.warn("Could not load favorites:", e.message);
         }
     }
 
-    const handleToggleWishlist = async (e, productId) => {
+    const handleToggleFavorite = async (e, productId) => {
         e.stopPropagation();
-        if (wishlistLoading) return;
-        setWishlistLoading(true);
+        if (favoriteLoading) return;
+        setFavoriteLoading(true);
         try {
-            const isWishlisted = wishlistProductIds.includes(productId);
-            if (isWishlisted) {
-                await removeWishlist(productId);
-                setWishlistProductIds(prev => prev.filter(id => id !== productId));
-                setToastMessage("Berhasil dihapus dari Wishlist");
+            const isFavorite = favoriteProductIds.includes(productId);
+            if (isFavorite) {
+                await removeFavorite(productId);
+                setFavoriteProductIds(prev => prev.filter(id => id !== productId));
+                setToastMessage("Berhasil dihapus dari Favorit");
                 setToastVisible(true);
             } else {
-                await addWishlist(productId);
-                setWishlistProductIds(prev => [...prev, productId]);
-                setToastMessage("Berhasil ditambahkan ke Wishlist");
+                await addFavorite(productId);
+                setFavoriteProductIds(prev => [...prev, productId]);
+                setToastMessage("Berhasil ditambahkan ke Favorit");
                 setToastVisible(true);
             }
             setTimeout(() => {
@@ -124,7 +123,7 @@ export default function Products() {
         } catch (e) {
             setError(e.message);
         } finally {
-            setWishlistLoading(false);
+            setFavoriteLoading(false);
         }
     };
 
@@ -347,11 +346,11 @@ export default function Products() {
                     ) : (
                         <div className="product-grid">
                             {items.map((p) => {
-                                const isWishlisted = wishlistProductIds.includes(p.id);
+                                const isFavorite = favoriteProductIds.includes(p.id);
                                 return (
                                     <div
                                         key={p.id}
-                                        className={`product-card${isWishlisted ? " product-card--wishlist" : ""}`}
+                                        className={`product-card${isFavorite ? " product-card--favorite" : ""}`}
                                     >
                                         <div className="product-image-ctr" onClick={() => setSelectedProduct(p)}>
                                             {p.gambar ? (
@@ -374,12 +373,12 @@ export default function Products() {
                                                     </div>
                                                     {isPelanggan && (
                                                         <button
-                                                            className={`btn-wishlist btn-wishlist--inline${isWishlisted ? " active" : ""}`}
-                                                            onClick={(e) => handleToggleWishlist(e, p.id)}
-                                                            disabled={wishlistLoading}
-                                                            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                                                            className={`btn-favorite btn-favorite--inline${isFavorite ? " active" : ""}`}
+                                                            onClick={(e) => handleToggleFavorite(e, p.id)}
+                                                            disabled={favoriteLoading}
+                                                            title={isFavorite ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                                                         >
-                                                            <i className={isWishlisted ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                                            <i className={isFavorite ? "ph-fill ph-heart" : "ph ph-heart"}></i>
                                                         </button>
                                                     )}
                                                 </div>
@@ -434,13 +433,13 @@ export default function Products() {
                                             <h3 style={{ marginBottom: "0.25rem", fontSize: "1.4rem", fontWeight: "800", flex: 1, textAlign: "left" }}>{selectedProduct.nama_produk}</h3>
                                             {isPelanggan && (
                                                 <button
-                                                    className={`btn-wishlist-modal mobile-only-wishlist${wishlistProductIds.includes(selectedProduct.id) ? " active" : ""}`}
-                                                    onClick={(e) => { handleToggleWishlist(e, selectedProduct.id); }}
-                                                    disabled={wishlistLoading}
-                                                    title={wishlistProductIds.includes(selectedProduct.id) ? "Remove Wishlist" : "Add to Wishlist"}
+                                                    className={`btn-favorite-modal mobile-only-favorite${favoriteProductIds.includes(selectedProduct.id) ? " active" : ""}`}
+                                                    onClick={(e) => { handleToggleFavorite(e, selectedProduct.id); }}
+                                                    disabled={favoriteLoading}
+                                                    title={favoriteProductIds.includes(selectedProduct.id) ? "Hapus Favorit" : "Tambah ke Favorit"}
                                                     style={{ marginTop: "0.25rem" }}
                                                 >
-                                                    <i className={wishlistProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                                    <i className={favoriteProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
                                                 </button>
                                             )}
                                         </div>
@@ -466,12 +465,12 @@ export default function Products() {
                                 <button className="btn-outline" style={{ flex: 1 }} onClick={() => setSelectedProduct(null)}>Close</button>
                                 {isPelanggan && (
                                     <button
-                                        className={`btn-wishlist-modal desktop-only-wishlist${wishlistProductIds.includes(selectedProduct.id) ? " active" : ""}`}
-                                        onClick={(e) => { handleToggleWishlist(e, selectedProduct.id); }}
-                                        disabled={wishlistLoading}
-                                        title={wishlistProductIds.includes(selectedProduct.id) ? "Remove Wishlist" : "Add to Wishlist"}
+                                        className={`btn-favorite-modal desktop-only-favorite${favoriteProductIds.includes(selectedProduct.id) ? " active" : ""}`}
+                                        onClick={(e) => { handleToggleFavorite(e, selectedProduct.id); }}
+                                        disabled={favoriteLoading}
+                                        title={favoriteProductIds.includes(selectedProduct.id) ? "Hapus Favorit" : "Tambah ke Favorit"}
                                     >
-                                        <i className={wishlistProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                        <i className={favoriteProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
                                     </button>
                                 )}
                                 {isAdmin && (
@@ -496,7 +495,7 @@ export default function Products() {
                         <i className={toastMessage.includes("dihapus") ? "ph-bold ph-x" : "ph-bold ph-check"} style={{ color: "#ffffff", fontSize: "1.3rem" }}></i>
                         <span style={{ fontWeight: "500", fontSize: "0.95rem" }}>{toastMessage}</span>
                     </div>
-                    <a href="#/wishlist" style={{
+                    <a href="#/favorite" style={{
                         padding: "0.4rem 0.8rem",
                         fontSize: "0.85rem",
                         textDecoration: "none",

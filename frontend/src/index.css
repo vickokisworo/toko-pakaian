@@ -489,7 +489,7 @@ tbody tr:hover {
   gap: 1.5rem;
 }
 
-.mobile-wishlist {
+.mobile-favorite {
   display: none !important;
 }
 
@@ -536,7 +536,7 @@ tbody tr:hover {
   color: var(--primary);
 }
 
-.wishlist-nav-item {
+.favorite-nav-item {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -550,7 +550,7 @@ tbody tr:hover {
   margin-left: 0.5rem;
 }
 
-.wishlist-nav-item::after {
+.favorite-nav-item::after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -563,7 +563,7 @@ tbody tr:hover {
   z-index: 10;
 }
 
-.wishlist-nav-item.active::after {
+.favorite-nav-item.active::after {
   width: 100%;
 }
 
@@ -827,7 +827,7 @@ tbody tr:hover {
     gap: 0.75rem;
   }
 
-  .modal-footer button:not(.btn-wishlist-modal) {
+  .modal-footer button:not(.btn-favorite-modal) {
     width: 100% !important;
     margin-left: 0 !important;
   }
@@ -1221,11 +1221,11 @@ tbody tr:hover {
     /* Flat buttons on mobile */
   }
 
-  .desktop-wishlist {
+  .desktop-favorite {
     display: none !important;
   }
 
-  .mobile-wishlist {
+  .mobile-favorite {
     display: flex !important;
   }
 
@@ -1440,8 +1440,8 @@ tbody tr:hover {
   }
 }
 
-/* Heart / wishlist button on product card */
-.btn-wishlist {
+/* Heart / favorite button on product card */
+.btn-favorite {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1457,31 +1457,31 @@ tbody tr:hover {
   line-height: 1;
 }
 
-.btn-wishlist:hover:not(:disabled) {
+.btn-favorite:hover:not(:disabled) {
   color: #e11d48;
   background: transparent;
   transform: none;
   box-shadow: none;
 }
 
-.btn-wishlist.active {
+.btn-favorite.active {
   color: #e11d48;
   background: transparent;
 }
 
-.btn-wishlist.active:hover:not(:disabled) {
+.btn-favorite.active:hover:not(:disabled) {
   color: #be123c;
   background: transparent;
   transform: none;
 }
 
-.btn-wishlist:disabled {
+.btn-favorite:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Card-positioned variant — absolute top-right of image */
-.btn-wishlist--card {
+.btn-favorite--card {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -1501,26 +1501,26 @@ tbody tr:hover {
   transition: color 0.2s ease;
 }
 
-.btn-wishlist--card:hover:not(:disabled) {
+.btn-favorite--card:hover:not(:disabled) {
   color: #e11d48;
   background: transparent;
   transform: none;
   box-shadow: none;
 }
 
-.btn-wishlist--card.active {
+.btn-favorite--card.active {
   color: #e11d48;
   background: transparent;
   box-shadow: none;
 }
 
-.btn-wishlist--card.active:hover:not(:disabled) {
+.btn-favorite--card.active:hover:not(:disabled) {
   color: #be123c;
   transform: none;
 }
 
 /* Inline variant — sits next to product name */
-.btn-wishlist--inline {
+.btn-favorite--inline {
   flex-shrink: 0;
   background: transparent;
   border: none;
@@ -1538,24 +1538,24 @@ tbody tr:hover {
   margin-top: 2px;
 }
 
-.btn-wishlist--inline:hover:not(:disabled) {
+.btn-favorite--inline:hover:not(:disabled) {
   color: #e5e7eb;
   transform: none;
   background: transparent;
   box-shadow: none;
 }
 
-.btn-wishlist--inline.active {
+.btn-favorite--inline.active {
   color: #e11d48;
 }
 
-.btn-wishlist--inline.active:hover:not(:disabled) {
+.btn-favorite--inline.active:hover:not(:disabled) {
   color: #be123c;
   transform: none;
 }
 
-/* Wishlist button inside product detail modal */
-.btn-wishlist-modal {
+/* favorite button inside product detail modal */
+.btn-favorite-modal {
   background: transparent;
   color: #d1d5db;
   border: 1.5px solid #7d7e7e;
@@ -1572,19 +1572,19 @@ tbody tr:hover {
   box-shadow: none;
 }
 
-.btn-wishlist-modal:hover:not(:disabled) {
+.btn-favorite-modal:hover:not(:disabled) {
   color: #e5e7eb;
   background: #e5e7eb1a;
   box-shadow: none;
   transform: none;
 }
 
-.btn-wishlist-modal.active {
+.btn-favorite-modal.active {
   color: #e11d48;
   background: transparent;
 }
 
-.btn-wishlist-modal.active:hover:not(:disabled) {
+.btn-favorite-modal.active:hover:not(:disabled) {
   color: #be123c;
   background: transparent;
   box-shadow: none;
@@ -1594,7 +1594,7 @@ tbody tr:hover {
 
 
 /* Ribbon badge that appears on the product image */
-.wishlist-ribbon {
+.favorite-ribbon {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -1659,20 +1659,20 @@ tbody tr:hover {
 
 /* Dashboard Styles consolidated at line 1070 */
 
-/* Responsive Detail Modal Wishlist Visibility */
-.mobile-only-wishlist {
+/* Responsive Detail Modal Favorite Visibility */
+.mobile-only-favorite {
   display: none !important; /* Hide by default on laptop/desktop */
 }
 
-.desktop-only-wishlist {
+.desktop-only-favorite {
   display: flex !important; /* Show by default on laptop/desktop */
 }
 
 @media (max-width: 850px) {
-  .mobile-only-wishlist {
+  .mobile-only-favorite {
     display: flex !important; /* Show only on HP */
   }
-  .desktop-only-wishlist {
+  .desktop-only-favorite {
     display: none !important; /* Hide on HP */
   }
 }
