@@ -8,7 +8,7 @@ const authorizeRoles = require("../middleware/authorization");
  * @swagger
  * tags:
  *   name: Transactions
- *   description: API untuk manajemen transaksi (Kasir: CRUD, Admin: READ ONLY)
+ *   description: "API untuk manajemen transaksi (Kasir: CRUD, Admin: READ ONLY)"
  */
 
 router.use(authenticateToken);

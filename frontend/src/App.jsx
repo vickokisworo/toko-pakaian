@@ -6,19 +6,24 @@ import Category from "./pages/Category";
 import User from "./pages/User";
 import Transaction from "./pages/Transaction";
 import Search from "./pages/Search";
-import Favorite from "./pages/Favorite";
+import Wishlist from "./pages/Wishlist";
 
 function AppShell({ onRoute, onLogout, user, currentRoute, children }) {
   if (!user) return null;
   const isAdmin = user.role === "admin";
   const isKasir = user.role === "kasir";
   const [globalSearch, setGlobalSearch] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const handleGlobalSearch = (e) => {
     if (e.key === "Enter" && globalSearch.trim()) {
       window.location.hash = `#/search?q=${encodeURIComponent(globalSearch)}`;
+      setIsMobileMenuOpen(false);
     }
   };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className="app-layout">
@@ -67,64 +72,131 @@ function AppShell({ onRoute, onLogout, user, currentRoute, children }) {
           </div>
 
           <div className="header-right">
-            <div className="user-profile">
-              <div className="user-avatar">
-                <i className="ph ph-user"></i>
+            <div className="user-profile" style={{ position: 'relative' }}>
+              <div 
+                className="user-profile-btn" 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}
+                title="Account Options"
+              >
+                <div className="user-avatar">
+                  <i className="ph ph-user"></i>
+                </div>
+                <div className="user-info">
+                  <span className="user-name">{user.nama}</span>
+                  {(isAdmin || isKasir) && (
+                    <span className="user-role badge badge-kasir" style={{ marginTop: "2px", padding: "3px 8px", fontSize: "0.65rem" }}>
+                      {user.role}
+                    </span>
+                  )}
+                </div>
+
               </div>
-              <div className="user-info">
-                <span className="user-name">{user.nama}</span>
-                {(isAdmin || isKasir) && (
-                  <span className="user-role badge badge-kasir" style={{ marginTop: "2px" }}>
-                    {user.role}
-                  </span>
-                )}
-              </div>
+
+              {isProfileMenuOpen && (
+                <>
+                  <div 
+                    className="profile-dropdown-overlay" 
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+                  ></div>
+                  <div className="profile-dropdown" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.8rem',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    boxShadow: 'var(--shadow-lg)',
+                    zIndex: 50,
+                    minWidth: '160px',
+                    padding: '0.5rem 0',
+                    overflow: 'hidden'
+                  }}>
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="dropdown-logout-btn"
+                      style={{ 
+                        width: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'flex-start',
+                        gap: '0.6rem', 
+                        padding: '0.6rem 1.2rem', 
+                        background: 'transparent',
+                        color: 'var(--danger)',
+                        border: 'none',
+                        boxShadow: 'none',
+                        borderRadius: '0',
+                        fontSize: '0.95rem'
+                      }}
+                    >
+                      <i className="ph-bold ph-sign-out"></i>
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
+              
               {user.role === "pelanggan" && (
-                <a href="#/favorite" title="My Favorite" style={{ color: "var(--text-main)", display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px", borderRadius: "50%", textDecoration: "none", transition: "var(--transition)", marginLeft: "0.5rem" }} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "var(--primary-light)"; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}>
+                <a
+                  href="#/wishlist"
+                  title="My Wishlist"
+                  className={`wishlist-nav-item desktop-wishlist ${currentRoute === "#/wishlist" ? "active" : ""}`}
+                >
                   <i className="ph ph-heart" style={{ fontSize: "1.6rem" }}></i>
                 </a>
               )}
-              <button
-                onClick={onLogout}
-                className="btn-outline"
-                style={{ marginLeft: "0.5rem", padding: "0.4rem 0.8rem", borderColor: "var(--danger)", color: "var(--danger)" }}
-                title="Logout"
-              >
-                <i className="ph-bold ph-sign-out"></i>
-              </button>
             </div>
           </div>
         </div>
+      </header>
 
-        <div className="header-bottom-row">
+      {/* Mobile Bottom Navigation - outside header for proper z-index stacking */}
+      <div className="header-bottom-row">
           <nav className="nav-links">
             <a href="#/" className={`top-nav-item ${currentRoute === "#/" ? "active" : ""}`}>
-              DASHBOARD
+              <i className="ph ph-house"></i>
+              <span>DASHBOARD</span>
             </a>
 
             <a href="#/product" className={`top-nav-item ${currentRoute.startsWith("#/product") ? "active" : ""}`}>
-              PRODUCTS
+              <i className="ph ph-shopping-bag"></i>
+              <span>PRODUCTS</span>
             </a>
 
             {(isAdmin || isKasir) && (
               <a href="#/transaction" className={`top-nav-item ${currentRoute === "#/transaction" ? "active" : ""}`}>
-                TRANSACTIONS
+                <i className="ph ph-receipt"></i>
+                <span>TRANSACTIONS</span>
               </a>
             )}
 
             {isAdmin && (
               <>
                 <a href="#/category" className={`top-nav-item ${currentRoute === "#/category" ? "active" : ""}`}>
-                  CATEGORIES
+                  <i className="ph ph-bookmarks"></i>
+                  <span>CATEGORIES</span>
                 </a>
                 <a href="#/user" className={`top-nav-item ${currentRoute === "#/user" ? "active" : ""}`}>
-                  USERS
+                  <i className="ph ph-users"></i>
+                  <span>USERS</span>
                 </a>
               </>
             )}
+
+            {user.role === "pelanggan" && (
+              <a href="#/wishlist" className={`top-nav-item mobile-wishlist ${currentRoute === "#/wishlist" ? "active" : ""}`}>
+                <i className="ph ph-heart"></i>
+                <span>WISHLIST</span>
+              </a>
+            )}
           </nav>
         </div>
-      </header>
 
       {/* Main Content wrapper */}
       <div className="main-content">
@@ -227,15 +299,14 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (e) {
-      console.error("Logout error:", e);
-    }
+    // 1. Matikan sesi di API/LocalStorage
+    logout();
     localStorage.removeItem("user");
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("refreshToken");
+
+    // 2. Update State UI
     setUser(null);
+
+    // 3. Redirect ke Login
     window.location.hash = "#/login";
   };
 
@@ -258,7 +329,7 @@ export default function App() {
   else if (route === "#/user") pageContent = <div className="roboto-content"><User user={user} /></div>;
   else if (route === "#/transaction") pageContent = <div className="roboto-content"><Transaction user={user} /></div>;
   else if (route.startsWith("#/search")) pageContent = <div className="roboto-content"><Search user={user} /></div>;
-  else if (route === "#/favorite") pageContent = <div className="roboto-content"><Favorite user={user} /></div>;
+  else if (route === "#/wishlist") pageContent = <div className="roboto-content"><Wishlist user={user} /></div>;
 
   return (
     <AppShell onRoute={handleRoute} onLogout={handleLogout} user={user} currentRoute={route}>

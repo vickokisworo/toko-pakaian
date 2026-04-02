@@ -67,7 +67,7 @@ export default function Login({ onLogin }) {
 
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <label>Email Address</label>
+            <label>Sign In</label>
             <div style={{ position: "relative" }}>
               <i className="ph ph-envelope" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
               <input
@@ -75,14 +75,13 @@ export default function Login({ onLogin }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, passwordRef)}
-                placeholder="example@email.com"
-                style={{ paddingLeft: "36px" }}
+                placeholder="Email Address"
+                style={{ paddingLeft: "36px", borderRadius: "8px" }}
               />
             </div>
           </div>
 
           <div className="input-group">
-            <label>Password</label>
             <div style={{ position: "relative" }}>
               <i className="ph ph-lock-key" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
               <input
@@ -91,8 +90,8 @@ export default function Login({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, null)}
-                placeholder="••••••••"
-                style={{ paddingLeft: "36px" }}
+                placeholder="Password"
+                style={{ paddingLeft: "36px", borderRadius: "8px" }}
               />
             </div>
           </div>
@@ -106,7 +105,7 @@ export default function Login({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", marginTop: "0.5rem" }}
+            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", marginTop: "0.5rem", borderRadius: "8px" }}
           >
             {loading ? (
               <><i className="ph ph-spinner-gap" style={{ animation: "spin 1s linear infinite" }}></i> Signing in...</>
@@ -121,7 +120,7 @@ export default function Login({ onLogin }) {
             type="button"
             className="btn-outline"
             onClick={() => setShowRegister(true)}
-            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem" }}
+            style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", borderRadius: "8px" }}
           >
             Create an Account
           </button>

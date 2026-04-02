@@ -60,7 +60,7 @@ export default function Register({ onRegistered, onBackToLogin }) {
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
-                        <label>Full Name</label>
+                        <label>Sign Up</label>
                         <div style={{ position: "relative" }}>
                             <i className="ph ph-user" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
                             <input
@@ -69,14 +69,13 @@ export default function Register({ onRegistered, onBackToLogin }) {
                                 value={formData.nama}
                                 onChange={handleChange}
                                 required
-                                placeholder="John Doe"
-                                style={{ paddingLeft: "36px" }}
+                                placeholder="Full Name"
+                                style={{ paddingLeft: "36px", borderRadius: "8px" }}
                             />
                         </div>
                     </div>
 
                     <div className="input-group">
-                        <label>Email Address</label>
                         <div style={{ position: "relative" }}>
                             <i className="ph ph-envelope" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
                             <input
@@ -85,14 +84,13 @@ export default function Register({ onRegistered, onBackToLogin }) {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                placeholder="example@email.com"
-                                style={{ paddingLeft: "36px" }}
+                                placeholder="Email Address"
+                                style={{ paddingLeft: "36px", borderRadius: "8px" }}
                             />
                         </div>
                     </div>
 
                     <div className="input-group" style={{ marginBottom: "2rem" }}>
-                        <label>Password</label>
                         <div style={{ position: "relative" }}>
                             <i className="ph ph-lock-key" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", fontSize: "1.1rem" }}></i>
                             <input
@@ -101,8 +99,8 @@ export default function Register({ onRegistered, onBackToLogin }) {
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                placeholder="••••••••"
-                                style={{ paddingLeft: "36px" }}
+                                placeholder="Password"
+                                style={{ paddingLeft: "36px", borderRadius: "8px" }}
                             />
                         </div>
                     </div>
@@ -116,7 +114,7 @@ export default function Register({ onRegistered, onBackToLogin }) {
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{ width: "100%", padding: "0.8rem", fontSize: "1rem" }}
+                        style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", borderRadius: "8px" }}
                     >
                         {loading ? (
                             <><i className="ph ph-spinner-gap" style={{ animation: "spin 1s linear infinite" }}></i> Registering...</>
@@ -131,7 +129,7 @@ export default function Register({ onRegistered, onBackToLogin }) {
                         type="button"
                         className="btn-outline"
                         onClick={onBackToLogin}
-                        style={{ width: "100%", padding: "0.8rem", fontSize: "1rem" }}
+                        style={{ width: "100%", padding: "0.8rem", fontSize: "1rem", borderRadius: "8px" }}
                     >
                         Back to Login
                     </button>

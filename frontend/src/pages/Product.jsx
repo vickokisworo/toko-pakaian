@@ -5,8 +5,9 @@ import {
     updateProduct,
     deleteProduct,
     getCategories,
-    getFavorite,
-    setFavorite,
+    getWishlist,
+    addWishlist,
+    removeWishlist,
 } from "../api";
 
 const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:3000";
@@ -41,10 +42,11 @@ export default function Products() {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState("all");
 
-    // Favorite state
-    const [favoriteProductId, setFavoriteProductId] = useState(null);
-    const [favoriteLoading, setFavoriteLoading] = useState(false);
+    // Wishlist state
+    const [wishlistProductIds, setWishlistProductIds] = useState([]);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
     const [toastVisible, setToastVisible] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
 
     const isAdmin = user?.role === "admin";
     const isPelanggan = user?.role === "pelanggan";
@@ -56,7 +58,7 @@ export default function Products() {
 
     useEffect(() => {
         if (isPelanggan) {
-            loadFavorite();
+            loadWishlist();
         }
     }, [isPelanggan]);
 
@@ -88,34 +90,41 @@ export default function Products() {
         }
     }
 
-    async function loadFavorite() {
+    async function loadWishlist() {
         try {
-            const data = await getFavorite();
-            setFavoriteProductId(data?.favorite?.id ?? null);
+            const data = await getWishlist();
+            const wishlists = data?.wishlists || [];
+            setWishlistProductIds(wishlists.map(f => f.id));
         } catch (e) {
             // silently fail — column may not exist yet
-            console.warn("Could not load favorite:", e.message);
+            console.warn("Could not load wishlist:", e.message);
         }
     }
 
-    const handleToggleFavorite = async (e, productId) => {
+    const handleToggleWishlist = async (e, productId) => {
         e.stopPropagation();
-        if (favoriteLoading) return;
-        setFavoriteLoading(true);
+        if (wishlistLoading) return;
+        setWishlistLoading(true);
         try {
-            const newId = favoriteProductId === productId ? null : productId;
-            await setFavorite(newId);
-            setFavoriteProductId(newId);
-            if (newId !== null) {
+            const isWishlisted = wishlistProductIds.includes(productId);
+            if (isWishlisted) {
+                await removeWishlist(productId);
+                setWishlistProductIds(prev => prev.filter(id => id !== productId));
+                setToastMessage("Berhasil dihapus dari Wishlist");
                 setToastVisible(true);
-                setTimeout(() => {
-                    setToastVisible(false);
-                }, 4000);
+            } else {
+                await addWishlist(productId);
+                setWishlistProductIds(prev => [...prev, productId]);
+                setToastMessage("Berhasil ditambahkan ke Wishlist");
+                setToastVisible(true);
             }
+            setTimeout(() => {
+                setToastVisible(false);
+            }, 4000);
         } catch (e) {
             setError(e.message);
         } finally {
-            setFavoriteLoading(false);
+            setWishlistLoading(false);
         }
     };
 
@@ -176,9 +185,6 @@ export default function Products() {
     return (
         <div>
             <div className="page-header">
-                <h1 className="page-title">
-                    Product List
-                </h1>
                 {isAdmin && (
                     <button
                         className="btn-success"
@@ -282,7 +288,6 @@ export default function Products() {
                                                 onChange={(e) => setFile(e.target.files[0])}
                                                 style={{ padding: "0.4rem" }}
                                             />
-                                            {file && <span style={{ fontSize: "0.8rem", color: "var(--secondary)" }}>Ready to upload</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -342,15 +347,15 @@ export default function Products() {
                     ) : (
                         <div className="product-grid">
                             {items.map((p) => {
-                                const isFav = favoriteProductId === p.id;
+                                const isWishlisted = wishlistProductIds.includes(p.id);
                                 return (
                                     <div
                                         key={p.id}
-                                        className={`product-card${isFav ? " product-card--favorite" : ""}`}
+                                        className={`product-card${isWishlisted ? " product-card--wishlist" : ""}`}
                                     >
                                         <div className="product-image-ctr" onClick={() => setSelectedProduct(p)}>
                                             {p.gambar ? (
-                                                <img src={`${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
+                                                <img src={p.gambar.startsWith("http") ? p.gambar : `${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
                                             ) : (
                                                 <div className="product-placeholder">
                                                     <i className="ph ph-image"></i>
@@ -369,12 +374,12 @@ export default function Products() {
                                                     </div>
                                                     {isPelanggan && (
                                                         <button
-                                                            className={`btn-favorite btn-favorite--inline${isFav ? " active" : ""}`}
-                                                            onClick={(e) => handleToggleFavorite(e, p.id)}
-                                                            disabled={favoriteLoading}
-                                                            title={isFav ? "Remove from favorite" : "Add to favorite"}
+                                                            className={`btn-wishlist btn-wishlist--inline${isWishlisted ? " active" : ""}`}
+                                                            onClick={(e) => handleToggleWishlist(e, p.id)}
+                                                            disabled={wishlistLoading}
+                                                            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                                                         >
-                                                            <i className={isFav ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                                            <i className={isWishlisted ? "ph-fill ph-heart" : "ph ph-heart"}></i>
                                                         </button>
                                                     )}
                                                 </div>
@@ -414,19 +419,32 @@ export default function Products() {
                                 </button>
                             </div>
                             <div className="modal-body">
-                                <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "1.5rem" }}>
-                                    <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", height: "250px", background: "#f3f4f6" }}>
+                                <div className="product-detail-grid" style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "1.5rem" }}>
+                                    <div className="product-detail-image-wrapper" style={{ borderRadius: "var(--radius-md)", overflow: "hidden", height: "250px", background: "#f3f4f6" }}>
                                         {selectedProduct.gambar ? (
-                                            <img src={`${API_BASE}/uploads/${selectedProduct.gambar}`} alt={selectedProduct.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                            <img src={selectedProduct.gambar.startsWith("http") ? selectedProduct.gambar : `${API_BASE}/uploads/${selectedProduct.gambar}`} alt={selectedProduct.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                         ) : (
                                             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem", color: "#cbd5e1" }}>
                                                 <i className="ph ph-image"></i>
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <h3 style={{ marginBottom: "0.25rem", fontSize: "1.4rem", fontWeight: "800" }}>{selectedProduct.nama_produk}</h3>
-                                        <div style={{ fontFamily: "'Roboto', sans-serif", color: "var(--primary)", fontSize: "1.5rem", fontWeight: "900", marginBottom: "1rem" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", width: "100%" }}>
+                                            <h3 style={{ marginBottom: "0.25rem", fontSize: "1.4rem", fontWeight: "800", flex: 1, textAlign: "left" }}>{selectedProduct.nama_produk}</h3>
+                                            {isPelanggan && (
+                                                <button
+                                                    className={`btn-wishlist-modal mobile-only-wishlist${wishlistProductIds.includes(selectedProduct.id) ? " active" : ""}`}
+                                                    onClick={(e) => { handleToggleWishlist(e, selectedProduct.id); }}
+                                                    disabled={wishlistLoading}
+                                                    title={wishlistProductIds.includes(selectedProduct.id) ? "Remove Wishlist" : "Add to Wishlist"}
+                                                    style={{ marginTop: "0.25rem" }}
+                                                >
+                                                    <i className={wishlistProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div style={{ fontFamily: "'Roboto', sans-serif", color: "var(--primary)", fontSize: "1.5rem", fontWeight: "900", marginBottom: "1rem", textAlign: "left", width: "100%" }}>
                                             Rp {selectedProduct.harga?.toLocaleString('id-ID')}
                                         </div>
 
@@ -445,24 +463,24 @@ export default function Products() {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button className="btn-outline" onClick={() => setSelectedProduct(null)}>Close</button>
+                                <button className="btn-outline" style={{ flex: 1 }} onClick={() => setSelectedProduct(null)}>Close</button>
                                 {isPelanggan && (
                                     <button
-                                        className={`btn-favorite-modal${favoriteProductId === selectedProduct.id ? " active" : ""}`}
-                                        onClick={(e) => { handleToggleFavorite(e, selectedProduct.id); }}
-                                        disabled={favoriteLoading}
-                                        title={favoriteProductId === selectedProduct.id ? "Remove Favorite" : "Add to Favorite"}
+                                        className={`btn-wishlist-modal desktop-only-wishlist${wishlistProductIds.includes(selectedProduct.id) ? " active" : ""}`}
+                                        onClick={(e) => { handleToggleWishlist(e, selectedProduct.id); }}
+                                        disabled={wishlistLoading}
+                                        title={wishlistProductIds.includes(selectedProduct.id) ? "Remove Wishlist" : "Add to Wishlist"}
                                     >
-                                        <i className={favoriteProductId === selectedProduct.id ? "ph-fill ph-heart" : "ph ph-heart"}></i>
+                                        <i className={wishlistProductIds.includes(selectedProduct.id) ? "ph-fill ph-heart" : "ph ph-heart"}></i>
                                     </button>
                                 )}
                                 {isAdmin && (
                                     <>
                                         <button className="btn-danger" onClick={() => { handleDelete(selectedProduct.id); setSelectedProduct(null); }}>
-                                            Delete Product
+                                            Delete
                                         </button>
                                         <button onClick={() => { handleEdit(selectedProduct); setSelectedProduct(null); }}>
-                                            Edit Product
+                                            Edit
                                         </button>
                                     </>
                                 )}
@@ -473,28 +491,13 @@ export default function Products() {
             }
 
             {toastVisible && (
-                <div style={{
-                    position: "fixed",
-                    bottom: "2rem",
-                    right: "2rem",
-                    backgroundColor: "#1a1a1a",
-                    color: "#ffffff",
-                    padding: "1rem 1.5rem",
-                    borderRadius: "var(--radius-lg)",
-                    boxShadow: "var(--shadow-lg)",
-                    border: "1px solid #333333",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1.5rem",
-                    zIndex: 9999,
-                    animation: "slideUp 0.3s ease",
-                }}>
+                <div className="toast-notification">
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <i className="ph-bold ph-check" style={{ color: "#ffffff", fontSize: "1.3rem" }}></i>
-                        <span style={{ fontWeight: "500", fontSize: "0.95rem" }}>Berhasil ditambahkan ke Favorite</span>
+                        <i className={toastMessage.includes("dihapus") ? "ph-bold ph-x" : "ph-bold ph-check"} style={{ color: "#ffffff", fontSize: "1.3rem" }}></i>
+                        <span style={{ fontWeight: "500", fontSize: "0.95rem" }}>{toastMessage}</span>
                     </div>
-                    <a href="#/favorite" style={{ 
-                        padding: "0.4rem 0.8rem", 
+                    <a href="#/wishlist" style={{
+                        padding: "0.4rem 0.8rem",
                         fontSize: "0.85rem",
                         textDecoration: "none",
                         fontWeight: "600",
@@ -504,8 +507,8 @@ export default function Products() {
                         backgroundColor: "transparent",
                         transition: "all 0.2s"
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#333333"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#333333"; }}
+                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
                         Lihat
                     </a>

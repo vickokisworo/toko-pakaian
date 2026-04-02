@@ -91,75 +91,51 @@ export default function Category() {
 
     return (
         <div>
-            <div className="page-header">
-                <h1 className="page-title">Categories</h1>
-            </div>
 
             {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
 
             {isAdmin && (
                 <div style={{ marginBottom: "1rem" }}>
                     <button
+                        className="btn-success"
                         onClick={() => {
                             setShowForm(true);
                             setEditingId(null);
                             setFormData({ nama_kategori: "" });
                         }}
                     >
-                        + Add New Category
+                        <i className="ph ph-plus"></i> Add New Category
                     </button>
 
                     {showForm && (
-                        <div
-                            style={{
-                                position: "fixed",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: "rgba(0,0,0,0.5)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                zIndex: 1000,
-                            }}
-                            onClick={() => {
-                                setShowForm(false);
-                                setEditingId(null);
-                            }}
-                        >
-                            <div
-                                className="card"
-                                onClick={(e) => e.stopPropagation()}
-                                style={{ width: "400px", padding: "2rem" }}
-                            >
-                                <h4>{editingId ? "Edit Category" : "New Category"}</h4>
+                        <div className="modal-overlay" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                            <div className="modal-content" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h4>{editingId ? "Edit Category" : "New Category"}</h4>
+                                    <button className="modal-close" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                                        <i className="ph ph-x"></i>
+                                    </button>
+                                </div>
                                 <form onSubmit={handleSubmit}>
-                                    <div style={{ marginBottom: "1rem" }}>
-                                        <label>Category Name</label>
-                                        <input
-                                            type="text"
-                                            name="nama_kategori"
-                                            value={formData.nama_kategori}
-                                            onChange={handleChange}
-                                            required
-                                            style={{ width: "100%", padding: "0.5rem" }}
-                                        />
+                                    <div className="modal-body">
+                                        <div className="input-group">
+                                            <label>Category Name</label>
+                                            <input
+                                                type="text"
+                                                name="nama_kategori"
+                                                placeholder="Example: T-Shirt"
+                                                value={formData.nama_kategori}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
                                     </div>
-
-                                    <div style={{ display: "flex", gap: "1rem" }}>
-                                        <button type="submit" style={{ flex: 1 }}>
-                                            {editingId ? "Update" : "Create"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowForm(false);
-                                                setEditingId(null);
-                                            }}
-                                            style={{ flex: 1, backgroundColor: "#ccc" }}
-                                        >
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn-outline" onClick={() => { setShowForm(false); setEditingId(null); }}>
                                             Cancel
+                                        </button>
+                                        <button type="submit" className="btn-success">
+                                            {editingId ? "Update" : "Create"}
                                         </button>
                                     </div>
                                 </form>
@@ -169,7 +145,7 @@ export default function Category() {
                 </div>
             )}
 
-            <div className="card">
+            <div className="card table-container">
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid #ddd" }}>
@@ -187,15 +163,17 @@ export default function Category() {
                                     <td style={{ padding: "0.5rem" }}>
                                         <button
                                             onClick={() => handleEdit(c)}
-                                            style={{ marginRight: "0.5rem", padding: "0.2rem 0.5rem" }}
+                                            style={{ marginRight: "0.5rem", padding: "0.3rem 0.6rem" }}
+                                            className="btn-view"
                                         >
-                                            Edit
+                                            <i className="ph ph-note-pencil"></i> Edit
                                         </button>
                                         <button
                                             onClick={() => handleDelete(c.id)}
-                                            style={{ backgroundColor: "#ff4d4f", color: "white", padding: "0.2rem 0.5rem" }}
+                                            className="btn-danger"
+                                            style={{ padding: "0.3rem 0.6rem", fontSize: "0.85rem" }}
                                         >
-                                            Delete
+                                            <i className="ph ph-trash"></i> Delete
                                         </button>
                                     </td>
                                 )}

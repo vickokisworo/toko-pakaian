@@ -3,14 +3,8 @@ const router = express.Router();
 const pool = require("../config/db");
 const authenticateToken = require("../middleware/authenticate");
 const authorizeRoles = require("../middleware/authorization");
-const multer = require("multer");
-const path = require("path");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
+const upload = require("../middleware/upload");
+const supabase = require("../supabaseClient");
 
 /**
  * @swagger
@@ -162,12 +156,34 @@ router.post(
   async (req, res) => {
     try {
       const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
-      const gambar = req.file ? req.file.filename : null;
+      let gambarUrl = null;
+
+      if (req.file) {
+        const fileExt = req.file.originalname.split('.').pop();
+        const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
+
+        const { data, error } = await supabase.storage
+          .from('products-image')
+          .upload(fileName, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error(`Upload gagal: ${error.message}`);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('products-image')
+          .getPublicUrl(fileName);
+
+        gambarUrl = publicUrlData.publicUrl;
+      }
 
       const newProduct = await pool.query(
         `INSERT INTO products (nama_produk, harga, stok, kategori_id, deskripsi, gambar) 
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [nama_produk, harga, stok, kategori_id, deskripsi, gambar],
+        [nama_produk, harga, stok, kategori_id, deskripsi, gambarUrl],
       );
       res.status(201).json(newProduct.rows[0]);
     } catch (err) {
@@ -220,7 +236,29 @@ router.put(
     try {
       const { id } = req.params;
       const { nama_produk, harga, stok, kategori_id, deskripsi } = req.body;
-      const gambar = req.file ? req.file.filename : undefined;
+      let gambarUrl = undefined;
+
+      if (req.file) {
+        const fileExt = req.file.originalname.split('.').pop();
+        const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
+
+        const { data, error } = await supabase.storage
+          .from('products-image')
+          .upload(fileName, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error(`Upload gagal: ${error.message}`);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('products-image')
+          .getPublicUrl(fileName);
+
+        gambarUrl = publicUrlData.publicUrl;
+      }
 
       let query = `UPDATE products 
          SET nama_produk=COALESCE($1, nama_produk), 
@@ -231,8 +269,8 @@ router.put(
 
       let params = [nama_produk, harga, stok, kategori_id, deskripsi];
 
-      if (gambar !== undefined) {
-        params.push(gambar);
+      if (gambarUrl !== undefined) {
+        params.push(gambarUrl);
         query += `, gambar=$${params.length}`;
       }
 

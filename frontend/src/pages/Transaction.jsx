@@ -266,7 +266,7 @@ export default function Transaction() {
                             }}>
                                 <div style={{ width: "80px", height: "80px", borderRadius: "4px", overflow: "hidden", background: "#eee", flexShrink: 0 }}>
                                     {item.gambar ? (
-                                        <img src={`${API_BASE}/uploads/${item.gambar}`} alt={item.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        <img src={item.gambar.startsWith("http") ? item.gambar : `${API_BASE}/uploads/${item.gambar}`} alt={item.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     ) : (
                                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc" }}>
                                             <i className="ph ph-image" style={{ fontSize: "2rem" }}></i>
@@ -311,7 +311,7 @@ export default function Transaction() {
                             <div key={p.id} className="product-card" style={{ opacity: p.stok < 1 ? 0.6 : 1, cursor: p.stok < 1 ? "not-allowed" : "pointer" }}>
                                 <div className="product-image-ctr" onClick={() => p.stok >= 1 && handleAddToCartFromCard(p)}>
                                     {p.gambar ? (
-                                        <img src={`${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
+                                        <img src={p.gambar.startsWith("http") ? p.gambar : `${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
                                     ) : (
                                         <div className="product-placeholder">
                                             <i className="ph ph-image"></i>
@@ -353,43 +353,45 @@ export default function Transaction() {
 
                 <div className="card" style={{ marginBottom: "1rem" }}>
                     <h4>Shopping Cart</h4>
-                    <table style={{ width: "100%", marginBottom: "1rem", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr style={{ borderBottom: "1px solid #ddd" }}>
-                                <th style={{ textAlign: "left" }}>Product Name</th>
-                                <th style={{ textAlign: "right" }}>Price</th>
-                                <th style={{ textAlign: "right" }}>Qty</th>
-                                <th style={{ textAlign: "right" }}>Subtotal</th>
-                                <th style={{ textAlign: "center" }}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {cartItems.map((item, idx) => (
-                                <tr key={idx} style={{ borderBottom: "1px solid #eee" }}>
-                                    <td>{item.nama_produk}</td>
-                                    <td style={{ textAlign: "right" }}>Rp. {item.harga_satuan}</td>
-                                    <td style={{ textAlign: "right" }}>
-                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.5rem" }}>
-                                            <button type="button" onClick={() => handleUpdateCartQty(idx, -1)} style={{ padding: "0.2rem 0.5rem" }}>-</button>
-                                            <span>{item.qty}</span>
-                                            <button type="button" onClick={() => handleUpdateCartQty(idx, 1)} style={{ padding: "0.2rem 0.5rem" }}>+</button>
-                                        </div>
-                                    </td>
-                                    <td style={{ textAlign: "right" }}>Rp. {item.subtotal}</td>
-                                    <td style={{ textAlign: "center" }}>
-                                        <button onClick={() => handleRemoveFromCart(idx)} style={{ background: "#ff4d4f", color: "white", padding: "0.2rem 0.5rem" }}>Cancel</button>
-                                    </td>
+                    <div className="table-container">
+                        <table style={{ width: "100%", marginBottom: "1rem", borderCollapse: "collapse" }}>
+                            <thead>
+                                <tr style={{ borderBottom: "1px solid #ddd" }}>
+                                    <th style={{ textAlign: "left" }}>Product Name</th>
+                                    <th style={{ textAlign: "right" }}>Price</th>
+                                    <th style={{ textAlign: "right" }}>Qty</th>
+                                    <th style={{ textAlign: "right" }}>Subtotal</th>
+                                    <th style={{ textAlign: "center" }}>Action</th>
                                 </tr>
-                            ))}
-                            {cartItems.length > 0 && (
-                                <tr>
-                                    <td colSpan={3} style={{ textAlign: "right", fontWeight: "bold" }}>Total:</td>
-                                    <td style={{ textAlign: "right", fontWeight: "bold", fontSize: "1.2rem" }}>Rp. {totalHargaCart}</td>
-                                    <td></td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {cartItems.map((item, idx) => (
+                                    <tr key={idx} style={{ borderBottom: "1px solid #eee" }}>
+                                        <td>{item.nama_produk}</td>
+                                        <td style={{ textAlign: "right" }}>Rp. {item.harga_satuan}</td>
+                                        <td style={{ textAlign: "right" }}>
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                                <button type="button" onClick={() => handleUpdateCartQty(idx, -1)} style={{ padding: "0.2rem 0.5rem" }}>-</button>
+                                                <span>{item.qty}</span>
+                                                <button type="button" onClick={() => handleUpdateCartQty(idx, 1)} style={{ padding: "0.2rem 0.5rem" }}>+</button>
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: "right" }}>Rp. {item.subtotal}</td>
+                                        <td style={{ textAlign: "center" }}>
+                                            <button onClick={() => handleRemoveFromCart(idx)} style={{ background: "#ff4d4f", color: "white", padding: "0.2rem 0.5rem" }}>Cancel</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {cartItems.length > 0 && (
+                                    <tr>
+                                        <td colSpan={3} style={{ textAlign: "right", fontWeight: "bold" }}>Total:</td>
+                                        <td style={{ textAlign: "right", fontWeight: "bold", fontSize: "1.2rem" }}>Rp. {totalHargaCart}</td>
+                                        <td></td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
                     <form onSubmit={handleSubmit}>
                         <div style={{ marginBottom: "1rem" }}>
@@ -407,7 +409,7 @@ export default function Transaction() {
                                 Change: Rp. {parseInt(jumlahBayar) - totalHargaCart}
                             </div>
                         )}
-                        <div style={{ display: "flex", gap: "1rem" }}>
+                        <div className="btn-group" style={{ display: "flex", gap: "1rem" }}>
                             <button type="submit" style={{ flex: 1, padding: "1rem", fontSize: "1.1rem" }}>
                                 {editingId ? "Update & Save Changes" : "Pay & Save Transaction"}
                             </button>
@@ -438,7 +440,6 @@ export default function Transaction() {
     return (
         <div>
             <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <h1 className="page-title">Transaction History</h1>
                 {isKasir && (
                     <button onClick={() => { setView("form"); resetForm(); setError(null); }}>
                         + New Transaction
@@ -448,7 +449,7 @@ export default function Transaction() {
 
             {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
 
-            <div className="card">
+            <div className="card table-container">
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid #ddd" }}>

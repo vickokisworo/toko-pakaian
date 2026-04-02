@@ -102,14 +102,19 @@ export async function login(email, password) {
 
 export async function logout() {
   const refreshToken = sessionStorage.getItem("refreshToken");
-  try {
-    await request(`/auth/logout`, {
-      method: "POST",
-      body: JSON.stringify({ refreshToken }),
-    });
-  } catch (e) { }
+  
+  // Clear local tokens immediately
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("refreshToken");
+
+  // Attempt to notify backend (don't wait for it if it hangs)
+  if (refreshToken) {
+    fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    }).catch(() => {});
+  }
 }
 
 export async function getProducts(params = {}) {
@@ -210,14 +215,20 @@ export async function deleteTransaction(id) {
   return request(`/transactions/${id}`, { method: "DELETE" });
 }
 
-export async function getFavorite() {
-  return request(`/auth/me/favorite`, { method: "GET" });
+export async function getWishlist() {
+  return request(`/auth/me/wishlist`, { method: "GET" });
 }
 
-export async function setFavorite(productId) {
-  return request(`/auth/me/favorite`, {
-    method: "PUT",
+export async function addWishlist(productId) {
+  return request(`/auth/me/wishlist`, {
+    method: "POST",
     body: JSON.stringify({ product_id: productId }),
+  });
+}
+
+export async function removeWishlist(productId) {
+  return request(`/auth/me/wishlist/${productId}`, {
+    method: "DELETE",
   });
 }
 
@@ -243,6 +254,7 @@ export default {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  getFavorite,
-  setFavorite,
+  getWishlist,
+  addWishlist,
+  removeWishlist,
 };

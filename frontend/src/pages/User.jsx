@@ -107,110 +107,86 @@ export default function User() {
 
     return (
         <div>
-            <div className="page-header">
-                <h1 className="page-title">Users Management</h1>
-            </div>
 
             {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
 
             <div style={{ marginBottom: "1rem" }}>
                 <button
+                    className="btn-success"
                     onClick={() => {
                         setShowForm(true);
                         setEditingId(null);
                         setFormData({ nama: "", email: "", password: "", role: "pelanggan" });
                     }}
                 >
-                    + Add New User
+                    <i className="ph ph-plus"></i> Add New User
                 </button>
 
                 {showForm && (
-                    <div
-                        style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: "rgba(0,0,0,0.5)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            zIndex: 1000,
-                        }}
-                        onClick={() => {
-                            setShowForm(false);
-                            setEditingId(null);
-                        }}
-                    >
-                        <div
-                            className="card"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ width: "400px", padding: "2rem" }}
-                        >
-                            <h4>{editingId ? "Edit User" : "New User"}</h4>
+                    <div className="modal-overlay" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                        <div className="modal-content" style={{ maxWidth: "450px" }} onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h4>{editingId ? "Edit User" : "New User"}</h4>
+                                <button className="modal-close" onClick={() => { setShowForm(false); setEditingId(null); }}>
+                                    <i className="ph ph-x"></i>
+                                </button>
+                            </div>
                             <form onSubmit={handleSubmit}>
-                                <div style={{ marginBottom: "1rem" }}>
-                                    <label>Name</label>
-                                    <input
-                                        type="text"
-                                        name="nama"
-                                        value={formData.nama}
-                                        onChange={handleChange}
-                                        required
-                                        style={{ width: "100%", padding: "0.5rem" }}
-                                    />
-                                </div>
-                                <div style={{ marginBottom: "1rem" }}>
-                                    <label>Email</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        required
-                                        style={{ width: "100%", padding: "0.5rem" }}
-                                    />
-                                </div>
-                                <div style={{ marginBottom: "1rem" }}>
-                                    <label>Password {editingId && <small>(Leave empty if you don't want to change it)</small>}</label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required={!editingId}
-                                        style={{ width: "100%", padding: "0.5rem" }}
-                                    />
-                                </div>
-                                <div style={{ marginBottom: "1rem" }}>
-                                    <label>Role</label>
-                                    <select
-                                        name="role"
-                                        value={formData.role}
-                                        onChange={handleChange}
-                                        style={{ width: "100%", padding: "0.5rem" }}
-                                    >
-                                        <option value="admin">Admin</option>
-                                        <option value="kasir">Cashier</option>
-                                        <option value="karyawan">Employee</option>
-                                        <option value="pelanggan">Customer</option>
-                                    </select>
+                                <div className="modal-body">
+                                    <div className="input-group">
+                                        <label>Name</label>
+                                        <input
+                                            type="text"
+                                            name="nama"
+                                            placeholder="Enter full name"
+                                            value={formData.nama}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            placeholder="user@example.com"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Password {editingId && <small style={{ fontWeight: 400, opacity: 0.7 }}>(Leave empty to keep current)</small>}</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            placeholder="••••••••"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            required={!editingId}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Role</label>
+                                        <select
+                                            name="role"
+                                            value={formData.role}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="admin">Admin</option>
+                                            <option value="kasir">Cashier</option>
+                                            <option value="karyawan">Employee</option>
+                                            <option value="pelanggan">Customer</option>
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div style={{ display: "flex", gap: "1rem" }}>
-                                    <button type="submit" style={{ flex: 1 }}>
-                                        {editingId ? "Update" : "Create"}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setShowForm(false);
-                                            setEditingId(null);
-                                        }}
-                                        style={{ flex: 1, backgroundColor: "#ccc" }}
-                                    >
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-outline" onClick={() => { setShowForm(false); setEditingId(null); }}>
                                         Cancel
+                                    </button>
+                                    <button type="submit" className="btn-success">
+                                        {editingId ? "Update User" : "Create User"}
                                     </button>
                                 </div>
                             </form>
@@ -219,7 +195,7 @@ export default function User() {
                 )}
             </div>
 
-            <div className="card">
+            <div className="card table-container">
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid #ddd" }}>
@@ -227,31 +203,39 @@ export default function User() {
                             <th style={{ padding: "0.5rem" }}>Name</th>
                             <th style={{ padding: "0.5rem" }}>Email</th>
                             <th style={{ padding: "0.5rem" }}>Role</th>
-                            <th style={{ padding: "0.5rem" }}>Actions</th>
+                            <th style={{ padding: "0.5rem", textAlign: "center" }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {users.map((u) => (
                             <tr key={u.id} style={{ borderBottom: "1px solid #eee" }}>
                                 <td style={{ padding: "0.5rem" }}>{u.id}</td>
-                                <td style={{ padding: "0.5rem" }}>{u.nama}</td>
-                                <td style={{ padding: "0.5rem" }}>{u.email}</td>
-                                <td style={{ padding: "0.5rem" }}>{u.role}</td>
                                 <td style={{ padding: "0.5rem" }}>
-                                    <button
-                                        onClick={() => handleEdit(u)}
-                                        style={{ marginRight: "0.5rem", padding: "0.2rem 0.5rem" }}
-                                    >
-                                        Edit
-                                    </button>
-                                    {currentUser.id !== u.id && (
+                                    <div style={{ fontWeight: "600" }}>{u.nama}</div>
+                                </td>
+                                <td style={{ padding: "0.5rem" }}>{u.email}</td>
+                                <td style={{ padding: "0.5rem", textTransform: "capitalize", color: "var(--text-muted)", fontWeight: "500" }}>
+                                    {u.role}
+                                </td>
+                                <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
                                         <button
-                                            onClick={() => handleDelete(u.id)}
-                                            style={{ backgroundColor: "#ff4d4f", color: "white", padding: "0.2rem 0.5rem" }}
+                                            onClick={() => handleEdit(u)}
+                                            className="btn-view"
+                                            style={{ padding: "0.3rem 0.6rem" }}
                                         >
-                                            Delete
+                                            <i className="ph ph-note-pencil"></i> Edit
                                         </button>
-                                    )}
+                                        {currentUser.id !== u.id && (
+                                            <button
+                                                onClick={() => handleDelete(u.id)}
+                                                className="btn-danger"
+                                                style={{ padding: "0.3rem 0.6rem", fontSize: "0.85rem" }}
+                                            >
+                                                <i className="ph ph-trash"></i> Delete
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

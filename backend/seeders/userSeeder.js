@@ -1,45 +1,45 @@
-require("dotenv").config();
-const { Client } = require("pg");
-const bcrypt = require("bcrypt");
+const pool = require("../config/db");
+const bcrypt = require("bcryptjs");
 
 async function seedUsers() {
-  const client = new Client({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
-
   try {
-    await client.connect();
-    console.log("✅ Connected to PostgreSQL");
+    console.log("🚀 Starting Seeder...");
 
     const hashedPassword = await bcrypt.hash("password", 10);
 
     const users = [
       {
-        nama: "Kasir 1",
-        email: "kasir1@mail.com",
+        nama: "Admin Utama",
+        email: "admin@mail.com",
+        password: hashedPassword,
+        role: "admin",
+      },
+      {
+        nama: "Kasir Toko",
+        email: "kasir@mail.com",
         password: hashedPassword,
         role: "kasir",
       },
     ];
 
     for (const user of users) {
-      await client.query(
+      await pool.query(
         `INSERT INTO users (nama, email, password, role)
          VALUES ($1, $2, $3, $4)
-         ON CONFLICT (email) DO NOTHING`,
+         ON CONFLICT (email) DO UPDATE SET
+         nama = EXCLUDED.nama,
+         password = EXCLUDED.password,
+         role = EXCLUDED.role`,
         [user.nama, user.email, user.password, user.role]
       );
+      console.log(`✅ User ${user.role} (${user.email}) seeded!`);
     }
 
-    console.log("🎉 Admin users seeded!");
+    console.log("🎉 Seeding completed successfully!");
   } catch (err) {
-    console.error("❌ Seeder error:", err);
+    console.error("❌ Seeder error:", err.message);
   } finally {
-    await client.end();
+    await pool.end();
   }
 }
 

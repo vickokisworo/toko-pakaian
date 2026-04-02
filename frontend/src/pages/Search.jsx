@@ -42,9 +42,8 @@ export default function Search() {
         <div className="search-page">
             <div className="page-header" style={{ marginBottom: "2rem" }}>
                 <h1 className="page-title">
-                    Search Results: <span style={{ color: "var(--primary)", fontWeight: "600" }}>"{searchQuery}"</span>
+                    Search results for  "{searchQuery}"
                 </h1>
-                <p style={{ color: "var(--text-muted)" }}>Found {items.length} products matching your criteria.</p>
             </div>
 
             {loading ? (
@@ -67,7 +66,7 @@ export default function Search() {
                         <div key={p.id} className="product-card">
                             <div className="product-image-ctr" onClick={() => setSelectedProduct(p)}>
                                 {p.gambar ? (
-                                    <img src={`${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
+                                    <img src={p.gambar.startsWith("http") ? p.gambar : `${API_BASE}/uploads/${p.gambar}`} alt={p.nama_produk} className="product-image" />
                                 ) : (
                                     <div className="product-placeholder">
                                         <i className="ph ph-image"></i>
@@ -86,7 +85,7 @@ export default function Search() {
                                             background: p.stok === 0 ? "rgba(239, 68, 68, 0.05)" : "rgba(10, 10, 10, 0.03)",
                                             color: p.stok === 0 ? "#e11d48" : "#1a1a1a",
                                             padding: "2px 8px",
-                                            borderRadius: "4px",
+                                            borderRadius: "0",
                                             fontWeight: "800",
                                             float: "right",
                                             border: `1.5px solid ${p.stok === 0 ? "#e11d48" : "#d1d5db"}`,
@@ -99,7 +98,7 @@ export default function Search() {
                                         {p.nama_produk}
                                     </div>
                                     <div className="product-price" style={{ fontSize: "1.1rem", margin: "0.25rem 0" }}>
-                                        $ {p.harga?.toLocaleString() || 0}
+                                        Rp {p.harga?.toLocaleString("id-ID") || 0}
                                     </div>
                                 </div>
 
@@ -122,10 +121,10 @@ export default function Search() {
                             </button>
                         </div>
                         <div className="modal-body">
-                            <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "1.5rem" }}>
-                                <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", height: "250px", background: "#f3f4f6" }}>
+                            <div className="product-detail-grid" style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: "1.5rem" }}>
+                                <div className="product-detail-image-wrapper" style={{ borderRadius: "var(--radius-md)", overflow: "hidden", height: "250px", background: "#f3f4f6" }}>
                                     {selectedProduct.gambar ? (
-                                        <img src={`${API_BASE}/uploads/${selectedProduct.gambar}`} alt={selectedProduct.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        <img src={selectedProduct.gambar.startsWith("http") ? selectedProduct.gambar : `${API_BASE}/uploads/${selectedProduct.gambar}`} alt={selectedProduct.nama_produk} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     ) : (
                                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem", color: "#cbd5e1" }}>
                                             <i className="ph ph-image"></i>
@@ -135,7 +134,7 @@ export default function Search() {
                                 <div style={{ display: "flex", flexDirection: "column" }}>
                                     <h3 style={{ marginBottom: "0.25rem", fontSize: "1.4rem" }}>{selectedProduct.nama_produk}</h3>
                                     <div style={{ color: "var(--primary)", fontSize: "1.5rem", fontWeight: "700", marginBottom: "1rem" }}>
-                                        $ {selectedProduct.harga?.toLocaleString()}
+                                        Rp {selectedProduct.harga?.toLocaleString("id-ID")}
                                     </div>
 
                                     <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
