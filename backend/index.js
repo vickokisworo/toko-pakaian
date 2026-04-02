@@ -16,6 +16,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/uploads", express.static("uploads")); // Serve uploaded files
+app.get("/api/ping", (req, res) => res.json({ message: "pong", status: "wishlist-ready-v3" }));
 
 
 const authRoutes = require("./routes/auth");
