@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+app.get("/api/ping", (req, res) => res.json({ message: "top-ping", version: "v5-fixed" }));
 require("dotenv").config();
 const cors = require("cors");
 
